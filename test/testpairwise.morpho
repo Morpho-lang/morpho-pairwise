@@ -1,0 +1,38 @@
+import selingernematic
+import meshtools 
+import plot 
+
+/*var mb = MeshBuilder() 
+var eps = 0.00001
+mb.addvertex([eps,eps])  
+mb.addvertex([1,eps])  
+mb.addvertex([eps,1])
+mb.addface([0,1,2])
+var m = mb.build() */
+
+var m = AreaMesh(fn (u,v) [u, v], 0.1..1:0.1, 0.1..1:0.1 )
+//var m = AreaMesh(fn (u,v) [u, 0, v], -0.05..0.05:0.05, 0.1..1:0.05 )
+
+//var nn = Field(m, Matrix([1,0,0]))
+//var u=0.1
+//nn[0,2] =  Matrix([cos(u),sin(u),0])
+
+//var nn = Field(m, fn (x,y) Matrix([x,y,0])/sqrt(x^2+y^2))
+var q = 0.1
+//var nn = Field(m, fn (x,y) Matrix([-q*y,q*x,1])/sqrt(1+q^2*(x^2+y^2)))
+//var nn = Field(m, fn (x,y) Matrix([-y,x,0])/sqrt(x^2+y^2))
+//var nn = Field(m, fn (x,y,z) Matrix([-q*y,q*x,1])/sqrt(1+q^2*(x^2+y^2)))
+//var nn = Field(m, fn (x,y,z) Matrix([q*x,-q*y,1])/sqrt(1+q^2*(x^2+y^2)))
+var nn = Field(m, fn (x,y) Matrix([x,y,0])/sqrt(x^2+y^2))
+
+var splay = SelingerNematic(nn, k11=1, k22=0, k33=0, k24=0)
+var twist = SelingerNematic(nn, k11=0, k22=1, k33=0, k24=0)
+var bend = SelingerNematic(nn, k11=0, k22=0, k33=1, k24=0)
+var delta = SelingerNematic(nn, k11=1, k22=1, k33=0, k24=1)
+
+print splay.total(m) 
+print twist.total(m) 
+print bend.total(m) 
+print delta.total(m) 
+
+//Show(plotmesh(m, grade=[0,1]))
