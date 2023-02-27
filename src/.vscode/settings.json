@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "pairwise.h": "c",
+        "veneer.h": "c",
+        "builtin.h": "c"
+    }
+}

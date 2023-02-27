@@ -4,7 +4,7 @@ obj = $(src:.c=.dylib)
 LDFLAGS  = -lm -lcblas -llapack -lcxsparse
 CFLAGS   =  -undefined dynamic_lookup -dynamiclib $(EXTCFLAGS) -O3
 
-selingernematic: 
+pairwise: 
 	$(CC) -o $@.dylib $(src) $(LDFLAGS) $(CFLAGS)
 
 .PHONY: clean
@@ -12,7 +12,7 @@ clean:
 	rm -f $(obj) 
 
 .PHONY: install
-install: selingernematic
-	cp selingernematic.dylib ../lib/selingernematic.dylib
+install: pairwise
+	cp pairwise.dylib ../lib/pairwise.dylib
 	make clean 
 	

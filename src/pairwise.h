@@ -2,14 +2,17 @@
 #include <morpho/morpho.h>
 #include <morpho/builtin.h>
 
-#define SELINGERNEMATIC_CLASSNAME      "SelingerNematic"
+#define PAIRWISE_CLASSNAME                   "Pairwise"
 
-#define SELINGERNEMATIC_ARGS           "SlngrNmtcArgs"
-#define SELINGERNEMATIC_ARGS_MSG       "SelingerNematic requires a field as the argument."
+#define PAIRWISE_POTENTIAL_PROPERTY          "potential"
+#define PAIRWISE_CUTOFF_PROPERTY             "cutoff"
 
-#define SELINGERNEMATIC_K11_PROPERTY   "k11"
-#define SELINGERNEMATIC_K22_PROPERTY   "k22"
-#define SELINGERNEMATIC_K33_PROPERTY   "k33"
-#define SELINGERNEMATIC_K24_PROPERTY   "k24"
+#define COULOMB_CLASSNAME                    "CoulombPotential"
 
-void selingernematic_initialize(void);
+#define PAIRWISE_VALUE_METHOD                "value"
+#define PAIRWISE_DERIVATIVE_METHOD           "derivative"
+
+#define PAIRWISE_PRP                         "PrwsPrp"
+#define PAIRWISE_PRP_MSG                     "Pairwise properties."
+
+void pairwise_initialize(void);
