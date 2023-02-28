@@ -1,3 +1,6 @@
 
 *.dylib
 .DS_Store
+.DS_Store
+lib/pairwise.dylib
+lib/pairwise.dylib

@@ -6,7 +6,7 @@
 
 #define PAIRWISE_POTENTIAL_PROPERTY          "potential"
 #define PAIRWISE_CUTOFF_PROPERTY             "cutoff"
-#define PAIRWISE_SIGMA_PROPERTY             "sigma"
+#define PAIRWISE_SIGMA_PROPERTY              "sigma"
 
 #define COULOMB_CLASSNAME                    "CoulombPotential"
 #define HERTZIAN_CLASSNAME                   "HertzianPotential"

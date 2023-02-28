@@ -5,7 +5,9 @@ import plot
 import optimize
 import pairwise 
 
-var Np = 100 // Number of particles
+var Np = 500 // Number of particles
+
+var Rmax = 2/sqrt(Np) // Maximum radius of particles 
 
 // Create the mesh, which consists of Np random points each representing
 // a charge on the unit sphere.
@@ -23,7 +25,7 @@ var problem = OptimizationProblem(mesh)
 // The particle repel one another by a Coulomb potential.
 // We supply the potential and it's derivative wrt r as anonymous functions.
 var hertz = HertzianPotential(0.01)
-var lv = Pairwise(hertz)
+var lv = Pairwise(hertz, cutoff=2*Rmax)
 problem.addenergy(lv)
 
 // Constrain the particles on the unit sphere via a level set constraint.
@@ -41,9 +43,8 @@ opt.stepsize=0.01/sqrt(Np)
 // condition. [This helps condition the problem]
 opt.relax(5)
 
-var Rmax = 2/sqrt(Np)
-
 for (sigma in 0.1*Rmax..2*Rmax:(2-0.1)*Rmax/40) {
+  lv.cutoff = sigma 
   hertz.sigma = sigma
   // Now perform gradient descent 
   opt.conjugategradient(1000) // Perform up to 1000 iterations of direct gradient descent

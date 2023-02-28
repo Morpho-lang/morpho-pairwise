@@ -112,12 +112,18 @@ typedef struct {
     value potential; 
     value valuemethod; 
     value derivmethod; 
+    bool cutoff; 
+    double cutoffdist; 
 } pairwiseref;
 
 /** Prepares the reference structure from the object's properties */
 bool pairwise_prepareref(objectinstance *self, objectmesh *mesh, grade g, objectselection *sel, pairwiseref *ref) {
     bool success=false;
-    
+    value cutoff; 
+
+    ref->cutoff=(objectinstance_getproperty(self, pairwise_cutoffproperty, &cutoff) && 
+                 morpho_valuetofloat(cutoff, &ref->cutoffdist));
+
     if (objectinstance_getproperty(self, pairwise_potentialproperty, &ref->potential) && 
         MORPHO_ISOBJECT(ref->potential) && 
         morpho_lookupmethod(ref->potential, pairwise_valuemethod, &ref->valuemethod) &&
@@ -141,6 +147,8 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
         matrix_getcolumn(mesh->vert, j, &x1);
         functional_vecsub(mesh->dim, x0, x1, s);
         double r = functional_vecnorm(mesh->dim, s);
+
+        if (eref->cutoff && r > eref->cutoffdist) continue; 
 
         // Call potential function 
         value rval = MORPHO_FLOAT(r), ret;
@@ -169,6 +177,8 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
         functional_vecsub(mesh->dim, x0, x1, s);
         double r = functional_vecnorm(mesh->dim, s);
 
+        if (eref->cutoff && r > eref->cutoffdist) continue; 
+
         // Call potential derivative function 
         value rval = MORPHO_FLOAT(r), ret;
         if (!morpho_invoke(v, eref->potential, eref->derivmethod, 1, &rval, &ret)) return false; 
@@ -187,9 +197,13 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
 /** Initialize a Pairwise object */
 value Pairwise_init(vm *v, int nargs, value *args) {
     objectinstance *self = MORPHO_GETINSTANCE(MORPHO_SELF(args));
+    int nfixed=nargs; 
+    value cutoff = MORPHO_NIL;
 
-    if (nargs>0 && MORPHO_ISOBJECT(MORPHO_GETARG(args, 0))) {
+    if (builtin_options(v, nargs, args, &nfixed, 1, pairwise_cutoffproperty, &cutoff) && 
+        nfixed>0 && MORPHO_ISOBJECT(MORPHO_GETARG(args, 0))) {
         objectinstance_setproperty(self, pairwise_potentialproperty, MORPHO_GETARG(args, 0));
+        objectinstance_setproperty(self, pairwise_cutoffproperty, cutoff);
     } else {
         morpho_runtimeerror(v, PAIRWISE_PRP);
     }
