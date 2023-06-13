@@ -25,6 +25,10 @@ void functional_vecsub_periodic(unsigned int n, double *a, double *b, double box
  * Some common pairwise potentials
  * ---------------------------------------------- */
 
+/* ----------------------------------------------
+ * Coulomb potential
+ * ---------------------------------------------- */
+
 value Coulomb_value(vm *v, int nargs, value *args) { 
     value out = MORPHO_NIL; 
     if (nargs==1) {
@@ -51,6 +55,11 @@ MORPHO_BEGINCLASS(Coulomb)
 MORPHO_METHOD(PAIRWISE_VALUE_METHOD, Coulomb_value, BUILTIN_FLAGSEMPTY),
 MORPHO_METHOD(PAIRWISE_DERIVATIVE_METHOD, Coulomb_deriv, BUILTIN_FLAGSEMPTY)
 MORPHO_ENDCLASS
+
+
+/* ----------------------------------------------
+ * Hertzian potential
+ * ---------------------------------------------- */
 
 value pairwise_sigmaproperty;
 
@@ -112,6 +121,10 @@ MORPHO_METHOD(PAIRWISE_VALUE_METHOD, Hertzian_value, BUILTIN_FLAGSEMPTY),
 MORPHO_METHOD(PAIRWISE_DERIVATIVE_METHOD, Hertzian_deriv, BUILTIN_FLAGSEMPTY)
 MORPHO_ENDCLASS
 
+/* ----------------------------------------------
+ * Lennard Jones
+ * ---------------------------------------------- */
+
 value lj_sigmaproperty;
 
 value LennardJones_init(vm *v, int nargs, value *args) {
@@ -120,7 +133,6 @@ value LennardJones_init(vm *v, int nargs, value *args) {
     if (nargs>0 && MORPHO_ISNUMBER(MORPHO_GETARG(args, 0))) {
         objectinstance_setproperty(self, lj_sigmaproperty, MORPHO_GETARG(args, 0));
     } else {
-        printf("Error here!\n");
         morpho_runtimeerror(v, PAIRWISE_PRP);
     }
 
@@ -165,6 +177,101 @@ MORPHO_METHOD(PAIRWISE_VALUE_METHOD, LennardJones_value, BUILTIN_FLAGSEMPTY),
 MORPHO_METHOD(PAIRWISE_DERIVATIVE_METHOD, LennardJones_deriv, BUILTIN_FLAGSEMPTY)
 MORPHO_ENDCLASS
 
+/* ----------------------------------------------
+ * SpherocylinderOverlap 
+ * ---------------------------------------------- */
+
+typedef struct {
+    value tangent; 
+    objectfield *tangentfield; 
+} spherocylinderref;
+
+/** Prepares the reference structure from the object's properties */
+bool spherocylinder_prepareref(objectinstance *self, objectmesh *mesh, grade g, objectselection *sel, spherocylinderref *ref) {
+    bool success=false;
+
+    if (objectinstance_getproperty(self, functional_fieldproperty, &ref->tangent) && 
+        MORPHO_ISFIELD(ref->tangent)) {
+        ref->tangentfield = MORPHO_GETFIELD(ref->tangent);
+        success=true; 
+    } 
+
+    return success;
+}
+
+
+/** Calculate pairwise interaction */
+bool spherocylinder_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, void *ref, double *out) {
+    spherocylinderref *eref = (spherocylinderref *) ref;  
+    double *x0, *x1, *t0, *t1, s[mesh->dim], sum = 0.0;
+    int nel; 
+
+    matrix_getcolumn(mesh->vert, id, &x0);
+    field_getelementaslist(eref->tangentfield, MESH_GRADE_VERTEX, id, 0, &nel, &t0); 
+
+    for (int j=0; j<id; j++) {
+        matrix_getcolumn(mesh->vert, j, &x1);
+
+        field_getelementaslist(eref->tangentfield, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
+
+        /*// Compute separation
+        
+        functional_vecsub(mesh->dim, x0, x1, s);
+        if (eref->periodic) {
+            functional_vecsub_periodic(mesh->dim, x0, x1, eref->box, s);
+        }
+        double r = functional_vecnorm(mesh->dim, s);
+
+        if (eref->cutoff && r > eref->cutoffdist) continue; 
+
+        // Call potential function 
+        value rval = MORPHO_FLOAT(r), ret;
+        if (!morpho_invoke(v, eref->potential, eref->valuemethod, 1, &rval, &ret)) return false; 
+
+        // Add to sum 
+        double val; 
+        if (morpho_valuetofloat(ret, &val)) sum+=val; */
+    }
+
+    *out=sum; 
+
+    return true;
+}
+
+value SpherocylinderOverlap_init(vm *v, int nargs, value *args) {
+    objectinstance *self = MORPHO_GETINSTANCE(MORPHO_SELF(args));
+    value field = MORPHO_NIL; 
+    value sigma = MORPHO_NIL; 
+
+    if (nargs>0 && MORPHO_ISFIELD(MORPHO_GETARG(args, 0))) {
+        field = MORPHO_GETARG(args, 0);
+    } 
+
+    if (nargs>1 && 
+        ( morpho_isnumber(MORPHO_GETARG(args, 1)) ) ) {
+            //( || MORPHO_ISFIELD(MORPHO_GETARG(args, 1))) 
+        sigma = MORPHO_GETARG(args, 1);
+    } 
+
+    if (MORPHO_ISNIL(field) || MORPHO_ISNIL(sigma)) {
+        morpho_runtimeerror(v, PAIRWISE_PRP);
+    } else {
+        objectinstance_setproperty(self, functional_fieldproperty, field);
+        objectinstance_setproperty(self, pairwise_sigmaproperty, sigma);
+    }
+
+    return MORPHO_NIL;
+}
+
+FUNCTIONAL_METHOD(SpherocylinderOverlap, integrand, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_mapintegrand, spherocylinder_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
+
+FUNCTIONAL_METHOD(SpherocylinderOverlap, total, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_sumintegrand, spherocylinder_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
+
+MORPHO_BEGINCLASS(SpherocylinderOverlap)
+MORPHO_METHOD(MORPHO_INITIALIZER_METHOD, SpherocylinderOverlap_init, BUILTIN_FLAGSEMPTY),
+MORPHO_METHOD(FUNCTIONAL_INTEGRAND_METHOD, SpherocylinderOverlap_integrand, BUILTIN_FLAGSEMPTY),
+MORPHO_METHOD(FUNCTIONAL_TOTAL_METHOD, SpherocylinderOverlap_total, BUILTIN_FLAGSEMPTY)
+MORPHO_ENDCLASS
 
 /* ----------------------------------------------
  * Pairwise class
@@ -339,6 +446,8 @@ void pairwise_initialize(void) {
     builtin_addclass(COULOMB_CLASSNAME, MORPHO_GETCLASSDEFINITION(Coulomb), objclass);
     builtin_addclass(HERTZIAN_CLASSNAME, MORPHO_GETCLASSDEFINITION(Hertzian), objclass);
     builtin_addclass(LENNARDJONES_CLASSNAME, MORPHO_GETCLASSDEFINITION(LennardJones), objclass);
+    builtin_addclass(SPHEROCYLINDER_CLASSNAME, MORPHO_GETCLASSDEFINITION(SpherocylinderOverlap), objclass);
 
     morpho_defineerror(PAIRWISE_PRP, ERROR_HALT, PAIRWISE_PRP_MSG);
+    morpho_defineerror(SPHEROCYLINDER_FLD, ERROR_HALT, SPHEROCYLINDER_FLD_MSG);
 }

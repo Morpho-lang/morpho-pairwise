@@ -1,0 +1,18 @@
+import pairwise
+import meshtools 
+
+var mb = MeshBuilder() 
+mb.addvertex([0,0,0])
+mb.addvertex([2,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+f[0,1]=Matrix([0,1,0])
+
+//var hertz = HertzianPotential(0.01)
+
+var sigma = 0.2
+var lcyl = SpherocylinderOverlap(f, sigma) 
+
+print lcyl.integrand(m)
+ 
