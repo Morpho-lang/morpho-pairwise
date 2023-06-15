@@ -185,6 +185,8 @@ typedef struct {
     double cutoffdist; 
     bool periodic; 
     double box; 
+    grade g; 
+    objectsparse *conn; // Connectivity matrix for grade g
 } pairwiseref;
 
 /** Prepares the reference structure from the object's properties */
@@ -192,14 +194,24 @@ bool pairwise_prepareref(objectinstance *self, objectmesh *mesh, grade g, object
     bool success=false;
     value cutoff; 
     value box;
+    value gradeprop; 
 
     ref->cutoff=(objectinstance_getproperty(self, pairwise_cutoffproperty, &cutoff) && 
                  morpho_valuetofloat(cutoff, &ref->cutoffdist));
     ref->periodic=(objectinstance_getproperty(self, pairwise_periodicproperty, &box) && 
                  morpho_valuetofloat(box, &ref->box));
 
+    ref->g=MESH_GRADE_VERTEX;
+    ref->conn=NULL; 
+    if (objectinstance_getproperty(self, functional_gradeproperty, &gradeprop)) {
+        morpho_valuetoint(gradeprop, &ref->g);
+    }
+    if (ref->g > MESH_GRADE_VERTEX) {
+        ref->conn = mesh_getconnectivityelement(mesh, 0, ref->g);
+    }
+
     if (objectinstance_getproperty(self, pairwise_potentialproperty, &ref->potential) && 
-        MORPHO_ISOBJECT(ref->potential) && 
+        MORPHO_ISOBJECT(ref->potential) &&
         morpho_lookupmethod(ref->potential, pairwise_valuemethod, &ref->valuemethod) &&
         morpho_lookupmethod(ref->potential, pairwise_derivativemethod, &ref->derivmethod)) {
 
@@ -209,16 +221,58 @@ bool pairwise_prepareref(objectinstance *self, objectmesh *mesh, grade g, object
     return success;
 }
 
+/** Compute the average vertex position
+ * @param[in] mesh - the mesh object 
+ * @param[in] nv   - number of vertices
+ * @param[in] vid  - vertex ids 
+ * @param[out] xmean - the mean vertex position
+ * @returns true on success
+ */
+bool pairwise_averagevertexposition(objectmesh *mesh, int nv, int *vid, double *xmean) {
+    double *x0; 
+    for (int i=0; i<mesh->dim; i++) xmean[i]=0.0; 
+    for (int i=0; i<nv; i++) {
+        if (!matrix_getcolumn(mesh->vert, vid[i], &x0)) return false; 
+        functional_vecadd(mesh->dim, x0, xmean, xmean);
+    }
+    functional_vecscale(mesh->dim, 1.0/nv, xmean, xmean);
+    return true; 
+}
+
 /** Calculate pairwise interaction */
 bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, void *ref, double *out) {
     pairwiseref *eref = (pairwiseref *) ref; 
     double *x0, *x1, s[mesh->dim], sum = 0.0;
+    double x0mean[mesh->dim], x1mean[mesh->dim];
 
-    matrix_getcolumn(mesh->vert, id, &x0);
+    // Extract x0 
+    if (nv==1) {
+        matrix_getcolumn(mesh->vert, id, &x0);
+    } else { // Compute average position from vertices
+        pairwise_averagevertexposition(mesh, nv, vid, x0mean);
+        x0 = x0mean; 
+        for (int i=0; i<mesh->dim; i++) printf("%g ", x0mean[i]);
+        printf("\n");
+        if (!eref->conn) UNREACHABLE("Connectivity matrix not available in Pairwise_integrand");
+    }
 
     for (int j=0; j<id; j++) {
+        // Extract x1
+        if (nv==1) {
+            matrix_getcolumn(mesh->vert, j, &x1);
+        } else {
+            int nvj, *vidj;
+            printf("conn: %p\n", (void *) eref->conn);
+            if (!sparseccs_getrowindices(&eref->conn->ccs, j, &nvj, &vidj)) return false; 
+            printf("nvj: %i\n", nvj);
+            pairwise_averagevertexposition(mesh, nvj, vidj, x1mean);
+            x1 = x1mean; 
+            printf("x1: %i\n", j);
+            for (int i=0; i<mesh->dim; i++) printf("%g ", x1mean[i]);
+            printf("\n");
+        }
+
         // Compute separation
-        matrix_getcolumn(mesh->vert, j, &x1);
         functional_vecsub(mesh->dim, x0, x1, s);
         if (eref->periodic) {
             functional_vecsub_periodic(mesh->dim, x0, x1, eref->box, s);
@@ -280,10 +334,12 @@ value Pairwise_init(vm *v, int nargs, value *args) {
     int nfixed=nargs; 
     value cutoff = MORPHO_NIL;
     value box = MORPHO_NIL;
+    value grade = MORPHO_INTEGER(0); 
 
-    if (builtin_options(v, nargs, args, &nfixed, 2, pairwise_cutoffproperty, &cutoff, pairwise_periodicproperty, &box) && 
+    if (builtin_options(v, nargs, args, &nfixed, 3, functional_gradeproperty, &grade, pairwise_cutoffproperty, &cutoff, pairwise_periodicproperty, &box) && 
         nfixed>0 && MORPHO_ISOBJECT(MORPHO_GETARG(args, 0))) {
         objectinstance_setproperty(self, pairwise_potentialproperty, MORPHO_GETARG(args, 0));
+        objectinstance_setproperty(self, functional_gradeproperty, grade);
         objectinstance_setproperty(self, pairwise_cutoffproperty, cutoff);
         objectinstance_setproperty(self, pairwise_periodicproperty, box);
     } else {
@@ -293,9 +349,9 @@ value Pairwise_init(vm *v, int nargs, value *args) {
     return MORPHO_NIL;
 }
 
-FUNCTIONAL_METHOD(Pairwise, integrand, MESH_GRADE_VERTEX, pairwiseref, pairwise_prepareref, functional_mapintegrand, pairwise_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
+FUNCTIONAL_METHOD(Pairwise, integrand, ref.g, pairwiseref, pairwise_prepareref, functional_mapintegrand, pairwise_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
 
-FUNCTIONAL_METHOD(Pairwise, total, MESH_GRADE_VERTEX, pairwiseref, pairwise_prepareref, functional_sumintegrand, pairwise_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
+FUNCTIONAL_METHOD(Pairwise, total, ref.g, pairwiseref, pairwise_prepareref, functional_sumintegrand, pairwise_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
 
 value Pairwise_gradient(vm *v, int nargs, value *args) {
     functional_mapinfo info;

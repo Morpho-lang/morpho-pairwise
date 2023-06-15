@@ -1,0 +1,36 @@
+// Create a packing of Hertzian particles on a sphere
+// by inflating the particles
+import meshtools
+import plot
+import optimize
+import pairwise 
+
+var L = 1
+var r = 0.1
+
+// Test mesh: two opposing equilateral triangles centered on [-L,0] and [L,0] of radius r
+//     x             x
+//      \           /
+//       x    0    x
+//      /           \
+//     x             x
+
+var mb = MeshBuilder() 
+for (theta in 0...2*Pi:2*Pi/3) {
+  mb.addvertex([-L+r*cos(theta),r*sin(theta),0])  
+}
+for (theta in 0...2*Pi:2*Pi/3) {
+  mb.addvertex([L-r*cos(theta),r*sin(theta),0])  
+}
+mb.addface([0,1,2])
+mb.addface([3,4,5])
+var m = mb.build() 
+
+//Show(plotmesh(m, grade=[0,2]))
+
+var c = CoulombPotential() 
+print c.value(2) 
+
+var lp = Pairwise(c, grade=2)
+
+print lp.integrand(m) 
