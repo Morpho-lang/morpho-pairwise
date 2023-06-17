@@ -48,4 +48,14 @@ var f = Field(m, Matrix([1,0,0]))
 print abs(SpherocylinderOverlap(f).total(m) - 3) < 1e-15
 // expect: true
 
-//var hertz = HertzianPotential(0.01)
+// Example 5: Another constrained problem 
+var mb = MeshBuilder() 
+mb.addvertex([-2.5,0,0])
+mb.addvertex([2.5,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+f[0,1]=Matrix([0,1,0])
+
+print abs(SpherocylinderOverlap(f).total(m) - 4) < 1e-15
+// expect: true

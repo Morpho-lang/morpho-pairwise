@@ -3,9 +3,9 @@ import meshtools
 import plot
 
 fn drawSpherocylinder(g, x, t, r) {
-    g.display(Sphere(x-t, r))
-    g.display(Sphere(x+t, r))
-    g.display(Cylinder(x-t, x+t, aspectratio = r/t.norm()))
+    //g.display(Sphere(x, r))
+    //g.display(Sphere(x+t, r))
+    g.display(Cylinder(x, x+t, aspectratio = 0.1))
 }
 
 fn visSpherocylinders(m, f, r) {
@@ -30,12 +30,12 @@ fn visGrid(n) {
 }
 
 var mb = MeshBuilder() 
-mb.addvertex([-2.5,0,0])
-mb.addvertex([2.5,0,0])
+mb.addvertex([-1,0,0])
+mb.addvertex([1,0,0])
 var m = mb.build() 
 
-var f = Field(m, Matrix([1,1,0]))
-f[0,1]=Matrix([0,1,0])
+var f = Field(m, Matrix([1,0,0]))
+//f[0,1]=Matrix([0,1,0])
 
 Show(visGrid(5)+visSpherocylinders(m, f, 1))
 
