@@ -34,3 +34,5 @@ print c.value(2)
 var lp = Pairwise(c, grade=2)
 
 print lp.integrand(m) 
+
+print lp.gradient(m) 
