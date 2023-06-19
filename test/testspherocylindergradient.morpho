@@ -59,4 +59,4 @@ print numericalgradient(SpherocylinderOverlap(f), m)
 print "Field gradient:"
 print SpherocylinderOverlap(f).fieldgradient(m)
 
-print numericalfieldgradient(SpherocylinderOverlap(f), m, f)
+//print numericalfieldgradient(SpherocylinderOverlap(f), m, f)

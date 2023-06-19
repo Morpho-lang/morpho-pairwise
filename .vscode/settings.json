@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "functional": "c",
-        "locale": "c"
+        "locale": "c",
+        "random": "c"
     }
 }
