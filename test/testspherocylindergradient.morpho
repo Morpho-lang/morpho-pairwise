@@ -24,19 +24,20 @@ fn numericalgradient(func, m, eps=1e-8) {
 
 fn numericalfieldgradient(func, m, f, eps=1e-8) {
    var grad=f.clone()
-   //var lmat = f.__linearize() 
+   var lmat=f.__linearize() 
+   var gmat=grad.__linearize() 
 
-   /*for (i in 0...m.count()) {
-      for (j in 0...dim) {
-         var temp = x[j,i]
-         x[j,i]=temp+eps
-         var fr=func.total(m)
-         x[j,i]=temp-eps
-         var fl=func.total(m)
-         x[j,i]=temp
-         grad[j,i]=(fr-fl)/(2*eps)
-      }
-   }*/
+   var len=lmat.dimensions()[0]
+
+   for (i in 0...len) {
+      var temp = lmat[i]
+      lmat[i]=temp+eps
+      var fr=func.total(m)
+      lmat[i]=temp-eps
+      var fl=func.total(m)
+      lmat[i]=temp
+      gmat[i]=(fr-fl)/(2*eps)
+   }
 
    return grad
 } 
@@ -59,4 +60,4 @@ print numericalgradient(SpherocylinderOverlap(f), m)
 print "Field gradient:"
 print SpherocylinderOverlap(f).fieldgradient(m)
 
-//print numericalfieldgradient(SpherocylinderOverlap(f), m, f)
+print numericalfieldgradient(SpherocylinderOverlap(f), m, f)
