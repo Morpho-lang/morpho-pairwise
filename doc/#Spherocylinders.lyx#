@@ -440,7 +440,7 @@ To find gradients of
 \end_inset
 
 , we can use 
-\begin_inset Formula $\nabla r=\nabla(\sqrt{s^{2}})=\frac{1}{2r}\nabla s^{2}$
+\begin_inset Formula $\nabla r=\nabla(\sqrt{s^{2}})=\frac{1}{2}$
 \end_inset
 
  

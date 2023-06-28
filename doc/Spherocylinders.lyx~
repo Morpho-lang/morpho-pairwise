@@ -426,7 +426,7 @@ as well as the gradient of
 \begin_inset Formula 
 \begin{align*}
 \nabla_{\mathbf{t}_{i}}s^{2} & =\lambda_{i}\nabla_{\mathbf{x}_{i}}s^{2}=2\lambda_{i}\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right)\\
-\nabla_{\mathbf{t}_{j}}s^{2} & =\lambda_{j}\nabla_{\mathbf{x}_{j}}s^{2}=-2\lambda_{i}\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right),
+\nabla_{\mathbf{t}_{j}}s^{2} & =\lambda_{j}\nabla_{\mathbf{x}_{j}}s^{2}=-2\lambda_{i}\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right).
 \end{align*}
 
 \end_inset
