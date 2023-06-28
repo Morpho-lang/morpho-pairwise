@@ -534,7 +534,7 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
     if (nel!=mesh->dim) return false; 
 
     for (int j=0; j<id; j++) {
-        double rsq, r, uu, vv; 
+        double rsq, r, uu, vv, dv=1.0; 
 
         matrix_getcolumn(mesh->vert, j, &x1);
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
@@ -552,17 +552,17 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
         value rval = MORPHO_FLOAT(r), ret;
         if (!MORPHO_ISNIL(eref->potential)) {
             if (!morpho_invoke(v, eref->potential, eref->derivmethod, 1, &rval, &ret)) return false; 
-            if (!morpho_valuetofloat(ret, &r)) return false; 
+            if (!morpho_valuetofloat(ret, &dv)) return false; 
         }
 
         // Grad_x0 s^2 = 2*((x0-x1) + u*t0 - v*t1 ) / (2 r)
         functional_vecsub(mesh->dim, x0, x1, s);
         functional_vecaddscale(mesh->dim, s, uu, t0, s);
         functional_vecaddscale(mesh->dim, s, -vv, t1, s);
-        matrix_addtocolumn(frc, id, 1/r, s);
+        matrix_addtocolumn(frc, id, dv/r, s);
 
         // Grad_x1 s^2 = -Grad_x0 s^2
-        matrix_addtocolumn(frc, j, -1/r, s);
+        matrix_addtocolumn(frc, j, -dv/r, s);
 
         //for (int i=0; i<mesh->dim; i++) printf("%g ", s[i]);
         //printf("\n");
@@ -583,7 +583,7 @@ bool spherocylinder_fieldgradient(vm *v, objectmesh *mesh, elementid id, int nv,
     if (nel!=mesh->dim || fnel!=mesh->dim) return false; 
 
     for (int j=0; j<id; j++) {
-        double rsq, r, uu, vv; 
+        double rsq, r, uu, vv, dv=1.0; 
 
         matrix_getcolumn(mesh->vert, j, &x1);
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
@@ -601,7 +601,7 @@ bool spherocylinder_fieldgradient(vm *v, objectmesh *mesh, elementid id, int nv,
         value rval = MORPHO_FLOAT(r), ret;
         if (!MORPHO_ISNIL(eref->potential)) {
             if (!morpho_invoke(v, eref->potential, eref->derivmethod, 1, &rval, &ret)) return false; 
-            if (!morpho_valuetofloat(ret, &r)) return false; 
+            if (!morpho_valuetofloat(ret, &dv)) return false; 
         }
 
         // Grad_t0 s^2 = 2*u*((x0-x1) + u*t0 - v*t1 ) / (2 r)
@@ -609,11 +609,11 @@ bool spherocylinder_fieldgradient(vm *v, objectmesh *mesh, elementid id, int nv,
         functional_vecaddscale(mesh->dim, s, uu, t0, s);
         functional_vecaddscale(mesh->dim, s, -vv, t1, s);
 
-        functional_vecaddscale(mesh->dim, ft0, uu/r, s, ft0);
+        functional_vecaddscale(mesh->dim, ft0, dv*uu/r, s, ft0);
 
         // Grad_t1 s^2 = - 2*v*((x0-x1) + u*t0 - v*t1 ) / (2 r)
         field_getelementaslist(frc, MESH_GRADE_VERTEX, j, 0, &fnel, &ft1); 
-        functional_vecaddscale(mesh->dim, ft1, -vv/r, s, ft1);
+        functional_vecaddscale(mesh->dim, ft1, -dv*vv/r, s, ft1);
     }
 
     return true;

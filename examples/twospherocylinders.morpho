@@ -1,0 +1,60 @@
+import pairwise
+import meshtools 
+import optimize
+import plot
+
+var Y = 0.55
+var X = 0.075
+
+var L = 0.5 // Length of cylinders
+var R = 0.1 // Radius of cylinders
+var sigma = 2*R // Cutoff 
+
+var mb = MeshBuilder() 
+mb.addvertex([-Y,-X,0])
+mb.addvertex([Y,X,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([L,0,0]))
+
+fn vis(m, f, color=col) {
+    var g = Graphics() 
+    for (id in 0...m.count()) {
+        var x = m.vertexposition(id) 
+        var t = f[0,id]
+        g.display(Sphere(x-t, R))
+        g.display(Sphere(x+t, R))
+        g.display(Cylinder(x-t,x+t, aspectratio = R/L))
+    }
+    return g 
+}  
+
+var hertz = HertzianPotential(sigma)
+
+var problem = OptimizationProblem(m)
+
+var lop = SpherocylinderOverlap(f, hertz)
+problem.addenergy(lop) 
+
+/*var sopt = ShapeOptimizer(problem, m)
+sopt.stepsize = 0.01
+sopt.relax(10)*/
+
+var fopt = FieldOptimizer(problem, f)
+fopt.stepsize = 0.01
+fopt.relax(10)
+
+Show(vis(m, f))
+
+//print lop.total(m)
+
+/*
+print "Total"
+print SpherocylinderOverlap(f, hertz).total(m)
+
+print "Gradient"
+print SpherocylinderOverlap(f, hertz).gradient(m)
+
+print "Field gradient:"
+print SpherocylinderOverlap(f, hertz).fieldgradient(m)
+*/
