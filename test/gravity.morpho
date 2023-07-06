@@ -1,5 +1,4 @@
-// Create a packing of Hertzian particles on a sphere
-// by inflating the particles
+// Test approximation of facets as point masses for gravity functionality
 import meshtools
 import plot
 import optimize
@@ -9,11 +8,13 @@ var L = 1
 var r = 0.1
 
 // Test mesh: two opposing equilateral triangles centered on [-L,0] and [L,0] of radius r
-//     x             x
-//      \           /
-//       x    0    x
-//      /           \
-//     x             x
+//    x               x
+//    |\             /|
+//    | \           / |
+//    |  x    0    x  |
+//    | /           \ |
+//    |/             \|
+//    x               x
 
 var mb = MeshBuilder() 
 for (theta in 0...2*Pi:2*Pi/3) {
@@ -26,13 +27,12 @@ mb.addface([0,1,2])
 mb.addface([3,4,5])
 var m = mb.build() 
 
-//Show(plotmesh(m, grade=[0,2]))
+// Show(plotmesh(m, grade=[0,2]))
 
-var c = CoulombPotential() 
-print c.value(2) 
+var c = GravityPotential() 
 
 var lp = Pairwise(c, grade=2)
 
 print lp.integrand(m) 
 
-print lp.gradient(m) 
+print lp.gradient(m)

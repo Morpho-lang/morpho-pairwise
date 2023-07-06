@@ -22,6 +22,41 @@ void functional_vecsub_periodic(unsigned int n, double *a, double *b, double box
 }
 
 /* ----------------------------------------------
+ * Hudson Gravity Attempt
+ * ---------------------------------------------- */
+
+value Gravity_value(vm *v, int nargs, value *args) { 
+    value out = MORPHO_NIL; 
+    if (nargs==1) {
+        double r;
+        if (morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
+            out = MORPHO_FLOAT(-1/(r*r));
+        } 
+    }
+    return out; 
+}
+
+value Gravity_deriv(vm *v, int nargs, value *args) { 
+    value out = MORPHO_NIL; 
+    if (nargs==1) {
+        double r;
+        if (morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
+            out = MORPHO_FLOAT(2/(r*r*r));
+        } 
+    }
+    return out; 
+}
+
+MORPHO_BEGINCLASS(Gravity)
+MORPHO_METHOD(PAIRWISE_VALUE_METHOD, Gravity_value, BUILTIN_FLAGSEMPTY),
+MORPHO_METHOD(PAIRWISE_DERIVATIVE_METHOD, Gravity_deriv, BUILTIN_FLAGSEMPTY)
+MORPHO_ENDCLASS
+
+/*
+    END HUDSON'S GRAVITY ATTEMPT
+*/
+
+/* ----------------------------------------------
  * Some common pairwise potentials
  * ---------------------------------------------- */
 
@@ -432,6 +467,7 @@ void pairwise_initialize(void) {
     builtin_addclass(PAIRWISE_CLASSNAME, MORPHO_GETCLASSDEFINITION(Pairwise), objclass);
 
     builtin_addclass(COULOMB_CLASSNAME, MORPHO_GETCLASSDEFINITION(Coulomb), objclass);
+    builtin_addclass(GRAVITY_CLASSNAME, MORPHO_GETCLASSDEFINITION(Gravity), objclass);
     builtin_addclass(HERTZIAN_CLASSNAME, MORPHO_GETCLASSDEFINITION(Hertzian), objclass);
     builtin_addclass(LENNARDJONES_CLASSNAME, MORPHO_GETCLASSDEFINITION(LennardJones), objclass);
 
