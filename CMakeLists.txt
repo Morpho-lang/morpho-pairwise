@@ -4,9 +4,8 @@ cmake_minimum_required(VERSION 3.26)
 project(morpho-pairwise)
 
 include(CMakePrintHelpers)
-#cmake_print_variables(PROJECT_SOURCE_DIR)
 
-add_library(pairwise MODULE pairwise.c)
+add_library(pairwise MODULE src/pairwise.c)
 
 # Find morpho header files 
 target_include_directories(pairwise PUBLIC /usr/local/include)
