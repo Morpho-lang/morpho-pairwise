@@ -29,10 +29,38 @@ var m = mb.build()
 //Show(plotmesh(m, grade=[0,2]))
 
 var c = CoulombPotential() 
+print ">>Value"
 print c.value(2) 
 
 var lp = Pairwise(c, grade=2)
 
+print ">>Total"
+print lp.total(m) 
+
+print ">>Integrand"
 print lp.integrand(m) 
 
+print ">>Gradient"
 print lp.gradient(m) 
+
+fn numericalgradient(func, m, eps=1e-8) {
+   var x=m.vertexmatrix()
+   var grad=x.clone()
+   var dim = x.dimensions()[0]
+
+   for (i in 0...m.count()) {
+      for (j in 0...dim) {
+         var temp = x[j,i]
+         x[j,i]=temp+eps
+         var fr=func.total(m)
+         x[j,i]=temp-eps
+         var fl=func.total(m)
+         x[j,i]=temp
+         grad[j,i]=(fr-fl)/(2*eps)
+      }
+   }
+
+   return grad
+} 
+
+print numericalgradient(lp, m)
