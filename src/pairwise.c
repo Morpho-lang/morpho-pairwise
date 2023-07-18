@@ -287,8 +287,8 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
     } else { // Compute average position from vertices
         pairwise_averagevertexposition(mesh, nv, vid, x0mean);
         x0 = x0mean; 
-        for (int i=0; i<mesh->dim; i++) printf("%g ", x0mean[i]);
-        printf("\n");
+        //for (int i=0; i<mesh->dim; i++) printf("%g ", x0mean[i]);
+        //printf("\n");
         if (!eref->conn) UNREACHABLE("Connectivity matrix not available in Pairwise_integrand");
         functional_elementsize(v, mesh, eref->g, id, nv, vid, &w0);
     }
@@ -299,16 +299,16 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
             matrix_getcolumn(mesh->vert, j, &x1);
         } else {
             int nvj, *vidj;
-            printf("conn: %p\n", (void *) eref->conn);
+            //printf("conn: %p\n", (void *) eref->conn);
             if (!sparseccs_getrowindices(&eref->conn->ccs, j, &nvj, &vidj)) return false; 
-            printf("nvj: %i\n", nvj);
+            //printf("nvj: %i\n", nvj);
             pairwise_averagevertexposition(mesh, nvj, vidj, x1mean);
             x1 = x1mean; 
-            printf("x1: %i\n", j);
-            for (int i=0; i<mesh->dim; i++) printf("%g ", x1mean[i]);
-            printf("\n");
+            //printf("x1: %i\n", j);
+            //for (int i=0; i<mesh->dim; i++) printf("%g ", x1mean[i]);
+            //printf("\n");
             functional_elementsize(v, mesh, eref->g, j, nvj, vidj, &w1);
-            printf("Element sizes [%g %g]\n", w0, w1);
+            //printf("Element sizes [%g %g]\n", w0, w1);
         }
 
         // Compute separation
@@ -324,9 +324,16 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
         value rval = MORPHO_FLOAT(r), ret;
         if (!morpho_invoke(v, eref->potential, eref->valuemethod, 1, &rval, &ret)) return false; 
 
-        // Add to sum 
-        double val; 
-        if (morpho_valuetofloat(ret, &val)) sum+=w0*w1*val; 
+        //printf("Value returned by potential function ");
+        //morpho_printvalue(ret);
+        //printf("\n");
+
+        w0=1.0; w1=1.0;  // Disable including the area 
+
+        double val;
+        if (morpho_valuetofloat(ret, &val)) {
+            sum+=w0*w1*val; 
+        } else return false; 
     }
 
     *out=sum; 
@@ -340,8 +347,9 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
     double *x0, *x1, s[mesh->dim];
     double x0mean[mesh->dim], x1mean[mesh->dim];
     double w0=1.0, w1=1.0;
+    int nvj, *vidj;
 
-    printf("GRADIENT\n");
+    //printf("GRADIENT\n");
 
     // Extract x0 
     if (nv==1) {
@@ -349,8 +357,8 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
     } else { // Compute average position from vertices
         pairwise_averagevertexposition(mesh, nv, vid, x0mean);
         x0 = x0mean; 
-        for (int i=0; i<mesh->dim; i++) printf("%g ", x0mean[i]);
-        printf("\n");
+        //for (int i=0; i<mesh->dim; i++) printf("%g ", x0mean[i]);
+        //printf("\n");
         if (!eref->conn) UNREACHABLE("Connectivity matrix not available in Pairwise_integrand");
         functional_elementsize(v, mesh, eref->g, id, nv, vid, &w0);
     }
@@ -360,17 +368,17 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
         if (nv==1) {
             matrix_getcolumn(mesh->vert, j, &x1);
         } else {
-            int nvj, *vidj;
-            printf("conn: %p\n", (void *) eref->conn);
+            
+            //printf("conn: %p\n", (void *) eref->conn);
             if (!sparseccs_getrowindices(&eref->conn->ccs, j, &nvj, &vidj)) return false; 
-            printf("nvj: %i\n", nvj);
+            //printf("nvj: %i\n", nvj);
             pairwise_averagevertexposition(mesh, nvj, vidj, x1mean);
             x1 = x1mean; 
-            printf("x1: %i\n", j);
-            for (int i=0; i<mesh->dim; i++) printf("%g ", x1mean[i]);
-            printf("\n");
+            //printf("x1: %i\n", j);
+            //for (int i=0; i<mesh->dim; i++) printf("%g ", x1mean[i]);
+            //printf("\n");
             functional_elementsize(v, mesh, eref->g, j, nvj, vidj, &w1);
-            printf("Element sizes [%g %g]\n", w0, w1);
+            //printf("Element sizes [%g %g]\n", w0, w1);
         }
 
         // Compute separation
@@ -386,6 +394,12 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
         value rval = MORPHO_FLOAT(r), ret;
         if (!morpho_invoke(v, eref->potential, eref->derivmethod, 1, &rval, &ret)) return false; 
 
+        // printf("Value returned by potential derivative function ");
+        // morpho_printvalue(ret);
+        // printf("\n");
+
+        w0=1.0; w1=1.0;  // Disable including the area 
+
         // Add to sum 
         double val; 
         if (morpho_valuetofloat(ret, &val)) {
@@ -393,7 +407,9 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
                 matrix_addtocolumn(frc, id, w0*w1*val/r, s);
                 matrix_addtocolumn(frc, j, -w0*w1*val/r, s);
             } else {
-
+                double nnv = (double) nv; 
+                for (int i=0; i<nv; i++) matrix_addtocolumn(frc, vid[i], w0*w1*val/r/nnv, s);
+                for (int i=0; i<nvj; i++) matrix_addtocolumn(frc, vidj[i], -w0*w1*val/r/nnv, s);
             }
         }
         
