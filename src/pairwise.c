@@ -30,7 +30,7 @@ value Gravity_value(vm *v, int nargs, value *args) {
     if (nargs==1) {
         double r;
         if (morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
-            out = MORPHO_FLOAT(-1/r));
+            out = MORPHO_FLOAT(-1/r);
         } 
     }
     return out; 
