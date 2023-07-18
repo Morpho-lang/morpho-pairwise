@@ -293,7 +293,7 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
         //morpho_printvalue(ret);
         //printf("\n");
 
-        w0=1.0; w1=1.0;
+        w0=1.0; w1=1.0;  // Disable including the area 
 
         double val;
         if (morpho_valuetofloat(ret, &val)) {
@@ -363,7 +363,7 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
         // morpho_printvalue(ret);
         // printf("\n");
 
-        w0=1.0; w1=1.0; 
+        w0=1.0; w1=1.0;  // Disable including the area 
 
         // Add to sum 
         double val; 
