@@ -1,9 +1,6 @@
 #include <stdio.h>
-#include <morpho/morpho.h>
-#include <morpho/builtin.h>
-#include <morpho/value.h>
-#include <morpho/veneer.h>
-#include <morpho/functional.h>
+#include <morpho.h>
+#include <functional.h>
 
 #include <math.h>
 #include "pairwise.h"
