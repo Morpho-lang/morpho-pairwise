@@ -434,7 +434,7 @@ bool spherocylinder_distance(unsigned int dim, double *x0, double *x1, double *t
         } else return false; 
     }
 
-    *dist = s;
+    *dist = fabs(s);
     if (uout) *uout = u; 
     if (vout) *vout = v; 
 
@@ -537,6 +537,8 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &rsq, &uu, &vv)) return false; 
+
+        printf("[[rsq: %g u: %g v: %g]]\n", rsq, uu, vv);
 
         r = sqrt(rsq);
 
