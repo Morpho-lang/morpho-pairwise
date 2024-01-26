@@ -2,7 +2,7 @@ src = $(wildcard *.c) $(wildcard */*.c)
 obj = $(src:.c=.dylib)
 
 LDFLAGS  = -lm -lcblas -llapack -lcxsparse -L/opt/homebrew/lib
-CFLAGS   =  -undefined dynamic_lookup -dynamiclib $(EXTCFLAGS) -O3 -I/opt/homebrew/include
+CFLAGS   =  -undefined dynamic_lookup -dynamiclib $(EXTCFLAGS) -O3 -I/opt/homebrew/include -I/usr/local/include/morpho
 
 pairwise: 
 	$(CC) -o $@.dylib $(src) $(LDFLAGS) $(CFLAGS)

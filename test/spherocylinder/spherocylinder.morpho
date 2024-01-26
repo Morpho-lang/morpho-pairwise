@@ -1,0 +1,43 @@
+import pairwise
+import meshtools 
+import plot
+
+fn drawSpherocylinder(g, x, t, r) {
+    //g.display(Sphere(x, r))
+    //g.display(Sphere(x+t, r))
+    g.display(Cylinder(x, x+t, aspectratio = 0.1))
+}
+
+fn visSpherocylinders(m, f, r) {
+    var g = Graphics()
+    for (id in 0...m.count()) {
+        var x = m.vertexposition(id)
+        var t = f[0,id]
+        drawSpherocylinder(g, x, t, r)
+    }
+
+    return g
+}
+
+fn visGrid(n) {
+    var g = Graphics() 
+
+    for (x in 0..n) for (y in 0..n) { 
+        g.display(Sphere([x,y,0],0.1,color=Red))
+    }
+
+    return g
+}
+
+var mb = MeshBuilder() 
+mb.addvertex([-1,0,0])
+mb.addvertex([1,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+//f[0,1]=Matrix([0,1,0])
+
+Show(visGrid(5)+visSpherocylinders(m, f, 1))
+
+print SpherocylinderOverlap(f).total(m)
+
