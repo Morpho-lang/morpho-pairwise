@@ -1,21 +1,54 @@
-
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.13)
 
 project(morpho-pairwise)
 
-include(CMakePrintHelpers)
+# Build the library as a plugin
+add_library(pairwise MODULE "") 
 
-add_library(pairwise MODULE src/pairwise.c)
-
-# Find morpho header files 
-target_include_directories(pairwise PUBLIC /usr/local/include)
-
-# Ensure we build a shared library
-set(BUILD_SHARED_LIBS ON)
-set_property(TARGET pairwise PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-# Ensure the outfile filename doens't begin with lib
+# Suppress 'lib' prefix
 set_target_properties(pairwise PROPERTIES PREFIX "")
 
-# Enable chained fixups - not platform indep
-target_link_libraries(pairwise "-undefined dynamic_lookup")
+# Add sources
+add_subdirectory(src)
+
+###
+
+# Locate the morpho.h header file and store in MORPHO_HEADER
+find_file(MORPHO_HEADER
+          morpho.h 
+          HINTS 
+          /usr/local/opt/morpho
+          /opt/homebrew/opt/morpho
+          /usr/local/include/morpho
+          )
+
+# Identify folder that morpho.h is located in from MORPHO_HEADER and store in MORPHO_INCLUDE
+get_filename_component(MORPHO_INCLUDE ${MORPHO_HEADER} DIRECTORY)
+
+# Add morpho headers to MORPHO_INCLUDE
+target_include_directories(pairwise PUBLIC ${MORPHO_INCLUDE})
+
+# Add general header search paths
+target_include_directories(pairwise PUBLIC /usr/local/include /opt/homebrew/include)
+
+# Add morpho headers in subfolders to MORPHO_INCLUDE
+file(GLOB morpho_subdirectories LIST_DIRECTORIES true ${MORPHO_INCLUDE}/*)
+foreach(dir ${morpho_subdirectories})
+    IF(IS_DIRECTORY ${dir})
+        target_include_directories(zeromq PUBLIC ${dir})
+    ELSE()
+        CONTINUE()
+    ENDIF()
+endforeach()
+
+# Locate libmorpho
+find_library(MORPHO_LIBRARY
+    NAMES morpho libmorpho
+)
+
+target_link_libraries(pairwise ${MORPHO_LIBRARY} ${ZMQ_LIBRARY} ${CZMQ_LIBRARY})
+
+set(CMAKE_INSTALL_PREFIX ..)
+
+# Install the resulting binary
+install(TARGETS pairwise LIBRARY DESTINATION lib/)
