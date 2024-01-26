@@ -1,0 +1,23 @@
+import pairwise
+import meshtools 
+import plot
+
+var L = 1.2
+
+var mb = MeshBuilder() 
+mb.addvertex([-L,0,0])
+mb.addvertex([L,0,0])
+var m = mb.build() 
+
+var hertz = HertzianPotential(0.5)
+
+var f = Field(m, Matrix([1,0,0]))
+
+print "Total"
+print SpherocylinderOverlap(f, hertz).total(m)
+
+print "Gradient"
+print SpherocylinderOverlap(f, hertz).gradient(m)
+
+print "Field gradient:"
+print SpherocylinderOverlap(f, hertz).fieldgradient(m)

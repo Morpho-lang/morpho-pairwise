@@ -1,0 +1,69 @@
+import pairwise
+import meshtools 
+import optimize
+import plot
+
+var N = 40
+
+var L = 0.4 // Length of cylinders
+var R = 0.1 // Radius of cylinders
+var sigma = 2*R // Cutoff 
+
+var mb = MeshBuilder() 
+for (i in 1..N) {
+    var x = Matrix([randomnormal(), randomnormal(), randomnormal()])
+    x = x/x.norm() 
+    mb.addvertex(x)
+} 
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+
+for (id in 0...m.count()) {
+    var x = m.vertexposition(id) 
+    var t = Matrix([randomnormal(), randomnormal(), randomnormal()])
+    t -= (t.inner(x)/x.inner(x)) * x
+    f[0, id] = L*t/t.norm() 
+}
+
+fn vis(m, f, color=col) {
+    var g = Graphics() 
+    for (id in 0...m.count()) {
+        var x = m.vertexposition(id) 
+        var t = f[0,id]
+        g.display(Cylinder(x-t,x+t, aspectratio  = R/L))
+    }
+    return g 
+}  
+
+var hertz = HertzianPotential(0.5)
+
+var problem = OptimizationProblem(m)
+
+var lop = SpherocylinderOverlap(f, hertz)
+problem.addenergy(lop) 
+
+var lsph = ScalarPotential(fn (x,y,z) x^2+y^2+z^2-1, fn (x,y,z) Matrix([2*x, 2*y, 2*z]))
+problem.addlocalconstraint(lsph)
+
+var sopt = ShapeOptimizer(problem, m)
+var fopt = ShapeOptimizer(problem, f)
+
+sopt.stepsize = 0.01
+sopt.linesearch(1000)
+//fopt.relax(1)
+
+Show(vis(m, f))
+
+//print lop.total(m)
+
+/*
+print "Total"
+print SpherocylinderOverlap(f, hertz).total(m)
+
+print "Gradient"
+print SpherocylinderOverlap(f, hertz).gradient(m)
+
+print "Field gradient:"
+print SpherocylinderOverlap(f, hertz).fieldgradient(m)
+*/

@@ -1,0 +1,462 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass revtex4-2
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Spherocylinder Intersections
+\end_layout
+
+\begin_layout Standard
+A set of spherocylinders is defined as a set of points 
+\begin_inset Formula $\mathbf{x}_{i}$
+\end_inset
+
+ , vectors 
+\begin_inset Formula $\mathbf{t}_{i}$
+\end_inset
+
+ with 
+\begin_inset Formula $i\in[0,N)$
+\end_inset
+
+ and a radii 
+\begin_inset Formula $\sigma_{i}$
+\end_inset
+
+.
+ The centerline of each cylinder is defined to lie along the line
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+We also consider alternate ranges for 
+\begin_inset Formula $\lambda_{i}$
+\end_inset
+
+, such that 
+\begin_inset Formula $\lambda\in[0,1]$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset Formula 
+\[
+\mathbf{X}_{i}=\mathbf{x}_{i}+\lambda_{i}\mathbf{t}_{i},\lambda\in[-1,1].
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To test for intersections, we need to find the two points 
+\begin_inset Formula $\mathbf{X}_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{X}_{j}$
+\end_inset
+
+ that are closest, i.e.
+ that minimize,
+\begin_inset Formula 
+\begin{equation}
+s^{2}=\left|\mathbf{X}_{i}-\mathbf{X}_{j}\right|^{2}\label{eq:opt}
+\end{equation}
+
+\end_inset
+
+subject to 
+\begin_inset Formula $-1\le\lambda_{i},\lambda_{j}\le1$
+\end_inset
+
+, i.e.
+ a box constraint.
+ The objective function 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:opt"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ is quadratic in the parameters 
+\begin_inset Formula $\Lambda=(\lambda_{i},\lambda_{j})$
+\end_inset
+
+ and can be written,
+\begin_inset Formula 
+\begin{equation}
+s^{2}=\mathbf{\Lambda}\cdot A\cdot\mathbf{\Lambda}^{T}-2\mathbf{\Lambda}\cdot\mathbf{b}^{T}+\Delta\mathbf{x}\cdot\Delta\mathbf{x}\label{eq:opt2}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $\Delta x=\mathbf{x}_{i}-\mathbf{x}_{j}$
+\end_inset
+
+ and, 
+\begin_inset Formula 
+\begin{align*}
+A & =\left(\begin{array}{cc}
+\mathbf{t}_{i}\cdot\mathbf{t}_{i} & -\mathbf{t}_{i}\cdot\mathbf{t}_{j}\\
+-\mathbf{t}_{i}\cdot\mathbf{t}_{j} & \mathbf{t}_{j}\cdot\mathbf{t}_{j}
+\end{array}\right)\\
+\mathbf{b} & =(\begin{array}{cc}
+\mathbf{t}_{i}\cdot\Delta\mathbf{x} & \mathbf{t}_{j}\cdot\Delta\mathbf{x}\end{array})
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To identify constrained minima of this function, there are three cases:
+ 
+\end_layout
+
+\begin_layout Subsection
+Unconstrained case
+\end_layout
+
+\begin_layout Standard
+We can minimize 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:opt2"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ by solving the linear system 
+\begin_inset Formula $A\Lambda=b$
+\end_inset
+
+ to yield, 
+\begin_inset Formula 
+\[
+\lambda_{i}=\frac{\left(\mathbf{t}_{i}\cdot\mathbf{t}_{j}\right)\left(\mathbf{t}_{j}\cdot\Delta\mathbf{x}\right)-\left(\mathbf{t}_{j}\cdot\mathbf{t}_{j}\right)\left(\mathbf{t}_{i}\cdot\Delta\mathbf{x}\right)}{\left(\mathbf{t}_{i}\cdot\mathbf{t}_{j}\right)^{2}-(\mathbf{t}_{i}\cdot\mathbf{t}_{i})(\mathbf{t}_{j}\cdot\mathbf{t}_{j})},\ \lambda_{j}=\frac{\left(\mathbf{t}_{i}\cdot\mathbf{t}_{i}\right)\left(\mathbf{t}_{j}\cdot\Delta\mathbf{x}\right)-\left(\mathbf{t}_{i}\cdot\mathbf{t}_{j}\right)\left(\mathbf{t}_{i}\cdot\Delta\mathbf{x}\right)}{\left(\mathbf{t}_{i}\cdot\mathbf{t}_{j}\right)^{2}-(\mathbf{t}_{i}\cdot\mathbf{t}_{i})(\mathbf{t}_{j}\cdot\mathbf{t}_{j})}.
+\]
+
+\end_inset
+
+Note that this formula fails if 
+\begin_inset Formula $\det A=\left(\mathbf{t}_{i}\cdot\mathbf{t}_{j}\right)^{2}-(\mathbf{t}_{i}\cdot\mathbf{t}_{i})(\mathbf{t}_{j}\cdot\mathbf{t}_{j})=0$
+\end_inset
+
+; we must check for this initially and handle this degenerate case separately
+ as below.
+ 
+\end_layout
+
+\begin_layout Subsection
+Degenerate case: 
+\begin_inset Formula $\det A=0$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The unconstrained formula fails if 
+\begin_inset Formula $\left(\mathbf{t}_{i}\cdot\mathbf{t}_{j}\right)^{2}-(\mathbf{t}_{i}\cdot\mathbf{t}_{i})(\mathbf{t}_{j}\cdot\mathbf{t}_{j})=0$
+\end_inset
+
+.
+ This occurs in a very important case where 
+\begin_inset Formula $\mathbf{t}_{i}\propto\mathbf{t}_{j}$
+\end_inset
+
+, i.e.
+ the spherocylinders are aligned.
+ Hence, the two lines 
+\begin_inset Formula $\mathbf{X}_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{X}_{j}$
+\end_inset
+
+ are parallel, and there is no unique minimizer of 
+\begin_inset Formula $s^{2}$
+\end_inset
+
+.
+ Rather, the shortest distance is simply any line perpendicular to both
+ and passing through each.
+ 
+\end_layout
+
+\begin_layout Standard
+In our parameter space, such a shortest path occurs along a line parallel
+ to 
+\begin_inset Formula $\lambda_{i}=\text{\ensuremath{\lambda_{j}}},$
+\end_inset
+
+ and so to find the minimal value we must search in the orthogonal direction
+ 
+\begin_inset Formula $\lambda_{j}=-\lambda_{i}$
+\end_inset
+
+.
+ To do so, we simply substitute 
+\begin_inset Formula $\Lambda=(\lambda_{i},-\lambda_{i})$
+\end_inset
+
+ into 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:opt2"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, differentiate with respect to 
+\begin_inset Formula $\lambda_{i}$
+\end_inset
+
+ and solve to yield, 
+\begin_inset Formula 
+\[
+\lambda_{i}=\frac{\left(\mathbf{t}_{i}\cdot\Delta\mathbf{x}\right)+\left(\mathbf{t}_{j}\cdot\Delta\mathbf{x}\right)}{(\mathbf{t}_{i}\cdot\mathbf{t}_{i})+(\mathbf{t}_{j}\cdot\mathbf{t}_{j})+2(\mathbf{t}_{i}\cdot\mathbf{t}_{j})},\ \lambda_{j}=-\lambda_{i}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Constrained case
+\end_layout
+
+\begin_layout Standard
+If either the regular or degenerate unconstrained case yield a solution
+ 
+\begin_inset Formula $\Lambda$
+\end_inset
+
+ that lies outside the feasible set, we must search the four edges of the
+ box constraint to identify the constrained minimum, which may lie at one
+ of the vertices.
+ We construct the four cases by substituting in the appropriate variable,
+ i.e.
+ 
+\begin_inset Formula $s^{2}(\lambda_{i},\lambda_{j}=-1),s^{2}(\lambda_{i},\lambda_{j}=1),s^{2}(\lambda_{i}=-1,\lambda_{j}),s^{2}(\lambda_{i}=1,\lambda_{j})$
+\end_inset
+
+ and minimizing on the remaining free parameter.
+ Each of these has the form of a one dimensional quadratic function, 
+\begin_inset Formula 
+\[
+px^{2}+qx+w,
+\]
+
+\end_inset
+
+for which the minimum occurs at,
+\begin_inset Formula 
+\[
+x=\frac{-q}{2p}.
+\]
+
+\end_inset
+
+If the minimum lies outside the bounds 
+\begin_inset Formula $-1\le x\le1$
+\end_inset
+
+, then the constrained minimum lies at the appropriate bound.
+ 
+\end_layout
+
+\begin_layout Section
+Intersection test
+\end_layout
+
+\begin_layout Standard
+From the above prescription, we can identify the shortest separation-squared
+ between any two spherocylinders 
+\begin_inset Formula $s^{2}$
+\end_inset
+
+ and the point 
+\begin_inset Formula $(\lambda_{i},\lambda_{j})$
+\end_inset
+
+ on each where this occurs.
+ Then, if 
+\begin_inset Formula $s^{2}<(\sigma_{i}+\sigma_{j})^{2}$
+\end_inset
+
+, the two spherocylinders intersect.
+ 
+\end_layout
+
+\begin_layout Section
+Gradients
+\end_layout
+
+\begin_layout Standard
+We can readily compute the gradient of 
+\begin_inset Formula $s^{2}$
+\end_inset
+
+ wrt 
+\begin_inset Formula $\mathbf{x}_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{x}_{j}$
+\end_inset
+
+, 
+\begin_inset Formula 
+\begin{align*}
+\nabla_{\mathbf{x}_{i}}s^{2} & =2\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right)\\
+\nabla_{\mathbf{x}_{j}}s^{2} & =-2\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right),
+\end{align*}
+
+\end_inset
+
+as well as the gradient of 
+\begin_inset Formula $s^{2}$
+\end_inset
+
+ wrt to 
+\begin_inset Formula $\mathbf{t}_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{t}_{j}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\nabla_{\mathbf{t}_{i}}s^{2} & =\lambda_{i}\nabla_{\mathbf{x}_{i}}s^{2}=2\lambda_{i}\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right)\\
+\nabla_{\mathbf{t}_{j}}s^{2} & =\lambda_{j}\nabla_{\mathbf{x}_{j}}s^{2}=-2\lambda_{i}\left(\lambda_{i}\mathbf{t}_{i}-\lambda_{j}\mathbf{t}_{j}+\Delta\mathbf{x}\right).
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Morpho Implementation
+\end_layout
+
+\begin_layout Standard
+We represent the spherocylinders as a 
+\series bold
+Mesh
+\series default
+ object containing the points 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ and a 
+\series bold
+Field
+\series default
+ object defined on the mesh and with entries 
+\begin_inset Formula $\mathbf{t}_{i}$
+\end_inset
+
+.
+\end_layout
+
+\end_body
+\end_document

@@ -1,0 +1,61 @@
+import pairwise
+import meshtools 
+
+// Example 1: Unconstrained problem 
+var mb = MeshBuilder() 
+mb.addvertex([1,1,1])
+mb.addvertex([0,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,1,0]))
+f[0,1]=Matrix([1,0,1])
+
+print abs(SpherocylinderOverlap(f).total(m) - sqrt(1/3)) < 1e-15
+// expect: true
+
+// Example 2: Constrained problem 
+var mb = MeshBuilder() 
+mb.addvertex([2,2,2])
+mb.addvertex([0,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,1,0]))
+f[0,1]=Matrix([1,0,1])
+
+print abs(SpherocylinderOverlap(f).total(m) - sqrt(2)) < 1e-15
+// expect: true
+
+// Example 3: Constrained problem 
+var mb = MeshBuilder() 
+mb.addvertex([0,0,0])
+mb.addvertex([3,1,2])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+f[0,1]=Matrix([1,1,1/2])
+
+print abs(SpherocylinderOverlap(f).total(m) - sqrt(3.25)) < 1e-15
+// expect: true
+
+// Example 4: Degenerate case
+var mb = MeshBuilder() 
+mb.addvertex([5,0,0])
+mb.addvertex([0,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+
+print abs(SpherocylinderOverlap(f).total(m) - 3) < 1e-15
+// expect: true
+
+// Example 5: Another constrained problem 
+var mb = MeshBuilder() 
+mb.addvertex([-2.5,0,0])
+mb.addvertex([2.5,0,0])
+var m = mb.build() 
+
+var f = Field(m, Matrix([1,0,0]))
+f[0,1]=Matrix([0,1,0])
+
+print abs(SpherocylinderOverlap(f).total(m) - 4) < 1e-15
+// expect: true
