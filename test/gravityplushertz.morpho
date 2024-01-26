@@ -1,0 +1,50 @@
+import pairwise
+import meshtools 
+import moviemaker
+import plot
+import optimize
+
+var mb = MeshBuilder() 
+mb.addvertex([-1,-1,0])
+mb.addvertex([-1,1,0])
+mb.addvertex([1,-1,0])
+mb.addvertex([1,1,0])
+var m = mb.build() 
+
+var sigma = 0.5
+
+fn visSpheres(m, sigma, color=nil) {
+    var c = color
+    if (isnil(c)) c = Gray(0.5)
+    var g = Graphics()
+    var R = sigma/2
+    for (id in 0...m.count()) {
+        g.display(Sphere(m.vertexposition(id), R, color=c))
+    }
+    return g
+}
+
+var ginit=visSpheres(m, sigma, color=Blue)
+
+var lp = Pairwise(GravityPotential())
+var lh = Pairwise(HertzianPotential(sigma))
+
+var problem = OptimizationProblem(m)
+
+problem.addenergy(lp)
+problem.addenergy(lh, prefactor=100)
+
+var opt = ShapeOptimizer(problem, m)
+opt.stepsize = 0.0001 
+opt.steplimit = 0.001
+
+opt.conjugategradient(10000)
+opt.relax(100)
+
+print m.vertexmatrix()
+
+print lp.gradient(m)
+
+print lh.gradient(m)
+
+Show(ginit+visSpheres(m, sigma, color=Red))

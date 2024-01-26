@@ -27,7 +27,7 @@ value Gravity_value(vm *v, int nargs, value *args) {
     if (nargs==1) {
         double r;
         if (morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
-            out = MORPHO_FLOAT(-1/(r*r));
+            out = MORPHO_FLOAT(-1/r);
         } 
     }
     return out; 
@@ -38,7 +38,7 @@ value Gravity_deriv(vm *v, int nargs, value *args) {
     if (nargs==1) {
         double r;
         if (morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
-            out = MORPHO_FLOAT(2/(r*r*r));
+            out = MORPHO_FLOAT(2/(r*r));
         } 
     }
     return out; 
@@ -850,6 +850,8 @@ MORPHO_METHOD(FUNCTIONAL_FIELDGRADIENT_METHOD, SpherocylinderOverlap_fieldgradie
 MORPHO_ENDCLASS
 
 void pairwise_initialize(void) { 
+    printf("Pairwise module initialized.\n");
+
     pairwise_potentialproperty=builtin_internsymbolascstring(PAIRWISE_POTENTIAL_PROPERTY);
     pairwise_cutoffproperty=builtin_internsymbolascstring(PAIRWISE_CUTOFF_PROPERTY);
     pairwise_periodicproperty=builtin_internsymbolascstring(PAIRWISE_PERIODIC_PROPERTY);

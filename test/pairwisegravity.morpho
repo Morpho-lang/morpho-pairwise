@@ -1,0 +1,31 @@
+import pairwise
+import meshtools 
+import moviemaker
+import plot
+import optimize
+
+var mb = MeshBuilder() 
+mb.addvertex([-1,-1,0])
+mb.addvertex([-1,1,0])
+mb.addvertex([1,-1,0])
+mb.addvertex([1,1,0])
+var m = mb.build() 
+
+var ginit=plotmesh(m, grade = [0], color=Blue)
+
+var lp = Pairwise(GravityPotential())
+
+print lp.total(m)
+print lp.integrand(m)
+print lp.gradient(m)
+
+var problem = OptimizationProblem(m)
+
+problem.addenergy(lp)
+
+var opt = ShapeOptimizer(problem, m)
+opt.stepsize=0.001
+
+opt.conjugategradient(100)
+
+Show(ginit+plotmesh(m, grade = [0,2]))
