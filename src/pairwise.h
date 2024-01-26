@@ -11,6 +11,7 @@
 #define PAIRWISE_CENTER_PROPERTY             "center"
 #define LJ_SIGMA_PROPERTY                    "sigma"
 
+#define GRAVITY_CLASSNAME                    "GravityPotential"
 #define COULOMB_CLASSNAME                    "CoulombPotential"
 #define HERTZIAN_CLASSNAME                   "HertzianPotential"
 #define LENNARDJONES_CLASSNAME               "LJPotential"
