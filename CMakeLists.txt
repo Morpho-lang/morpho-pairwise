@@ -35,7 +35,7 @@ target_include_directories(pairwise PUBLIC /usr/local/include /opt/homebrew/incl
 file(GLOB morpho_subdirectories LIST_DIRECTORIES true ${MORPHO_INCLUDE}/*)
 foreach(dir ${morpho_subdirectories})
     IF(IS_DIRECTORY ${dir})
-        target_include_directories(zeromq PUBLIC ${dir})
+        target_include_directories(pairwise PUBLIC ${dir})
     ELSE()
         CONTINUE()
     ENDIF()
