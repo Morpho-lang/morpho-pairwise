@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include <morpho/morpho.h>
-#include <morpho/builtin.h>
+#include <morpho.h>
 
 #define PAIRWISE_CLASSNAME                   "Pairwise"
 

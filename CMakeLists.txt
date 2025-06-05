@@ -11,8 +11,6 @@ set_target_properties(pairwise PROPERTIES PREFIX "")
 # Add sources
 add_subdirectory(src)
 
-###
-
 # Locate the morpho.h header file and store in MORPHO_HEADER
 find_file(MORPHO_HEADER
           morpho.h 

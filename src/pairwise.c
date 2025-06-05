@@ -1,5 +1,13 @@
+
+#define MORPHO_INCLUDE_LINALG
+#define MORPHO_INCLUDE_SPARSE
+#define MORPHO_INCLUDE_GEOMETRY
+
 #include <stdio.h>
 #include <morpho.h>
+#include <builtin.h>
+#include <classes.h>
+#include <geometry.h>
 #include <functional.h>
 
 #include <math.h>
