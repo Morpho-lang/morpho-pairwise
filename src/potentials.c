@@ -2,9 +2,6 @@
  *  @brief Common pairwise potential classes
  */
 
-#define MORPHO_INCLUDE_LINALG
-
-#include <stdio.h>
 #include <math.h>
 #include <morpho.h>
 #include <builtin.h>
@@ -33,7 +30,7 @@ value Gravity_deriv(vm *v, int nargs, value *args) {
     if (nargs==1) {
         double r;
         if (morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
-            out = MORPHO_FLOAT(2/(r*r));
+            out = MORPHO_FLOAT(1/(r*r));
         }
     }
     return out;

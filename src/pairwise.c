@@ -106,28 +106,25 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
     pairwiseref *eref = (pairwiseref *) ref;
     double *x0, *x1, s[mesh->dim], sum = 0.0;
     double x0mean[mesh->dim], x1mean[mesh->dim];
-    double w0=1.0, w1=1.0;
 
     // Extract x0
     if (nv==1) {
-        matrix_getcolumnptr(mesh->vert, id, &x0);
+        if (matrix_getcolumnptr(mesh->vert, id, &x0)!=LINALGERR_OK) return false;
     } else { // Compute average position from vertices
-        pairwise_averagevertexposition(mesh, nv, vid, x0mean);
+        if (!pairwise_averagevertexposition(mesh, nv, vid, x0mean)) return false;
         x0 = x0mean;
         if (!eref->conn) UNREACHABLE("Connectivity matrix not available in Pairwise_integrand");
-        functional_elementsize(v, mesh, eref->g, id, nv, vid, &w0);
     }
 
     for (int j=0; j<id; j++) {
         // Extract x1
         if (nv==1) {
-            matrix_getcolumnptr(mesh->vert, j, &x1);
+            if (matrix_getcolumnptr(mesh->vert, j, &x1)!=LINALGERR_OK) return false;
         } else {
             int nvj, *vidj;
             if (!sparseccs_getrowindices(&eref->conn->ccs, j, &nvj, &vidj)) return false;
-            pairwise_averagevertexposition(mesh, nvj, vidj, x1mean);
+            if (!pairwise_averagevertexposition(mesh, nvj, vidj, x1mean)) return false;
             x1 = x1mean;
-            functional_elementsize(v, mesh, eref->g, j, nvj, vidj, &w1);
         }
 
         // Compute separation
@@ -143,11 +140,9 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
         value rval = MORPHO_FLOAT(r), ret;
         if (!morpho_invoke(v, eref->potential, eref->valuemethod, 1, &rval, &ret)) return false;
 
-        w0=1.0; w1=1.0;  // Disable including the area
-
         double val;
         if (morpho_valuetofloat(ret, &val)) {
-            sum+=w0*w1*val;
+            sum+=val;
         } else return false;
     }
 
@@ -161,28 +156,25 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
     pairwiseref *eref = (pairwiseref *) ref;
     double *x0, *x1, s[mesh->dim];
     double x0mean[mesh->dim], x1mean[mesh->dim];
-    double w0=1.0, w1=1.0;
     int nvj, *vidj;
 
     // Extract x0
     if (nv==1) {
-        matrix_getcolumnptr(mesh->vert, id, &x0);
+        if (matrix_getcolumnptr(mesh->vert, id, &x0)!=LINALGERR_OK) return false;
     } else { // Compute average position from vertices
-        pairwise_averagevertexposition(mesh, nv, vid, x0mean);
+        if (!pairwise_averagevertexposition(mesh, nv, vid, x0mean)) return false;
         x0 = x0mean;
         if (!eref->conn) UNREACHABLE("Connectivity matrix not available in Pairwise_integrand");
-        functional_elementsize(v, mesh, eref->g, id, nv, vid, &w0);
     }
 
     for (int j=0; j<id; j++) {
         // Extract x1
         if (nv==1) {
-            matrix_getcolumnptr(mesh->vert, j, &x1);
+            if (matrix_getcolumnptr(mesh->vert, j, &x1)!=LINALGERR_OK) return false;
         } else {
             if (!sparseccs_getrowindices(&eref->conn->ccs, j, &nvj, &vidj)) return false;
-            pairwise_averagevertexposition(mesh, nvj, vidj, x1mean);
+            if (!pairwise_averagevertexposition(mesh, nvj, vidj, x1mean)) return false;
             x1 = x1mean;
-            functional_elementsize(v, mesh, eref->g, j, nvj, vidj, &w1);
         }
 
         // Compute separation
@@ -193,23 +185,26 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
         double r = functional_vecnorm(mesh->dim, s);
 
         if (eref->cutoff && r > eref->cutoffdist) continue;
+        if (fabs(r)<MORPHO_EPS) continue;
 
         // Call potential derivative function
         value rval = MORPHO_FLOAT(r), ret;
         if (!morpho_invoke(v, eref->potential, eref->derivmethod, 1, &rval, &ret)) return false;
 
-        w0=1.0; w1=1.0;  // Disable including the area
-
         // Add to sum
         double val;
         if (morpho_valuetofloat(ret, &val)) {
             if (nv==1) {
-                matrix_addtocolumnptr(frc, id, w0*w1*val/r, s);
-                matrix_addtocolumnptr(frc, j, -w0*w1*val/r, s);
+                if (matrix_addtocolumnptr(frc, id, val/r, s)!=LINALGERR_OK) return false;
+                if (matrix_addtocolumnptr(frc, j, -val/r, s)!=LINALGERR_OK) return false;
             } else {
                 double nnv = (double) nv;
-                for (int i=0; i<nv; i++) matrix_addtocolumnptr(frc, vid[i], w0*w1*val/r/nnv, s);
-                for (int i=0; i<nvj; i++) matrix_addtocolumnptr(frc, vidj[i], -w0*w1*val/r/nnv, s);
+                for (int i=0; i<nv; i++) {
+                    if (matrix_addtocolumnptr(frc, vid[i], val/r/nnv, s)!=LINALGERR_OK) return false;
+                }
+                for (int i=0; i<nvj; i++) {
+                    if (matrix_addtocolumnptr(frc, vidj[i], -val/r/nnv, s)!=LINALGERR_OK) return false;
+                }
             }
         }
 

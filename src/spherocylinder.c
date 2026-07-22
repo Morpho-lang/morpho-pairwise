@@ -6,7 +6,6 @@
 #define MORPHO_INCLUDE_SPARSE
 #define MORPHO_INCLUDE_GEOMETRY
 
-#include <stdio.h>
 #include <math.h>
 #include <morpho.h>
 #include <builtin.h>
@@ -78,7 +77,7 @@ bool spherocylinder_distance(unsigned int dim, double *x0, double *x1, double *t
 
     double u,v,s; // Points of closest contact and closest contact
     double ulower = (center ? -1 : 0), uupper = 1; // Upper and lower bounds for u
-    double vlower = (center ? -1 : 0), vupper = 1; // Upper and lower bounds for u
+    double vlower = (center ? -1 : 0), vupper = 1; // Upper and lower bounds for v
 
     double discrim = t01*t01 - t00*t11; // Alignment discriminant
 
@@ -117,7 +116,7 @@ bool spherocylinder_distance(unsigned int dim, double *x0, double *x1, double *t
 /** Prepares the reference structure from the object's properties */
 bool spherocylinder_prepareref(objectinstance *self, objectmesh *mesh, grade g, objectselection *sel, spherocylinderref *ref) {
     bool success=false;
-    value sigma, center;
+    value sigma, center, pot;
 
     ref->usesigma=(objectinstance_getproperty(self, pairwise_sigmaproperty, &sigma) &&
                  morpho_valuetofloat(sigma, &ref->sigma));
@@ -129,10 +128,13 @@ bool spherocylinder_prepareref(objectinstance *self, objectmesh *mesh, grade g, 
     }
 
     ref->potential = MORPHO_NIL;
-    if (objectinstance_getproperty(self, pairwise_potentialproperty, &ref->potential) &&
-        MORPHO_ISOBJECT(ref->potential) &&
-        morpho_lookupmethod(ref->potential, pairwise_valuemethod, &ref->valuemethod) &&
-        morpho_lookupmethod(ref->potential, pairwise_derivativemethod, &ref->derivmethod)) {
+    ref->valuemethod = MORPHO_NIL;
+    ref->derivmethod = MORPHO_NIL;
+    if (objectinstance_getproperty(self, pairwise_potentialproperty, &pot) &&
+        MORPHO_ISOBJECT(pot) &&
+        morpho_lookupmethod(pot, pairwise_valuemethod, &ref->valuemethod) &&
+        morpho_lookupmethod(pot, pairwise_derivativemethod, &ref->derivmethod)) {
+        ref->potential = pot;
     }
 
     if (objectinstance_getproperty(self, functional_fieldproperty, &ref->tangent) &&
@@ -160,17 +162,20 @@ void *spherocylinder_cloneref(void *ref, objectfield *field, objectfield *sub) {
 /** Calculate pairwise interaction */
 bool spherocylinder_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, void *ref, double *out) {
     spherocylinderref *eref = (spherocylinderref *) ref;
-    double *x0, *x1, *t0, *t1, s[mesh->dim], sum = 0.0;
+    double *x0, *x1, *t0, *t1, sum = 0.0;
     unsigned int nel;
 
-    matrix_getcolumnptr(mesh->vert, id, &x0);
+    if (matrix_getcolumnptr(mesh->vert, id, &x0)!=LINALGERR_OK) return false;
     field_getelementaslist(eref->field, MESH_GRADE_VERTEX, id, 0, &nel, &t0);
-    if (nel!=mesh->dim) return false;
+    if (nel!=mesh->dim) {
+        morpho_runtimeerror(v, SPHEROCYLINDER_DIM);
+        return false;
+    }
 
     for (int j=0; j<id; j++) {
         double r;
 
-        matrix_getcolumnptr(mesh->vert, j, &x1);
+        if (matrix_getcolumnptr(mesh->vert, j, &x1)!=LINALGERR_OK) return false;
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &r, NULL, NULL)) return false;
@@ -199,19 +204,20 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
     double *x0, *x1, *t0, *t1, s[mesh->dim];
     unsigned int nel;
 
-    matrix_getcolumnptr(mesh->vert, id, &x0);
+    if (matrix_getcolumnptr(mesh->vert, id, &x0)!=LINALGERR_OK) return false;
     field_getelementaslist(eref->field, MESH_GRADE_VERTEX, id, 0, &nel, &t0);
-    if (nel!=mesh->dim) return false;
+    if (nel!=mesh->dim) {
+        morpho_runtimeerror(v, SPHEROCYLINDER_DIM);
+        return false;
+    }
 
     for (int j=0; j<id; j++) {
         double rsq, r, uu, vv, dv=1.0;
 
-        matrix_getcolumnptr(mesh->vert, j, &x1);
+        if (matrix_getcolumnptr(mesh->vert, j, &x1)!=LINALGERR_OK) return false;
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &rsq, &uu, &vv)) return false;
-
-        printf("[[rsq: %g u: %g v: %g]]\n", rsq, uu, vv);
 
         r = sqrt(rsq);
 
@@ -229,10 +235,10 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
         functional_vecsub(mesh->dim, x0, x1, s);
         functional_vecaddscale(mesh->dim, s, uu, t0, s);
         functional_vecaddscale(mesh->dim, s, -vv, t1, s);
-        matrix_addtocolumnptr(frc, id, dv/r, s);
+        if (matrix_addtocolumnptr(frc, id, dv/r, s)!=LINALGERR_OK) return false;
 
         // Grad_x1 s^2 = -Grad_x0 s^2
-        matrix_addtocolumnptr(frc, j, -dv/r, s);
+        if (matrix_addtocolumnptr(frc, j, -dv/r, s)!=LINALGERR_OK) return false;
     }
 
     return true;
@@ -244,15 +250,18 @@ bool spherocylinder_fieldgradient(vm *v, objectmesh *mesh, elementid id, int nv,
     double *x0, *x1, *t0, *t1, *ft0, *ft1, s[mesh->dim];
     unsigned int nel, fnel;
 
-    matrix_getcolumnptr(mesh->vert, id, &x0);
+    if (matrix_getcolumnptr(mesh->vert, id, &x0)!=LINALGERR_OK) return false;
     field_getelementaslist(eref->field, MESH_GRADE_VERTEX, id, 0, &nel, &t0);
     field_getelementaslist(frc, MESH_GRADE_VERTEX, id, 0, &fnel, &ft0);
-    if (nel!=mesh->dim || fnel!=mesh->dim) return false;
+    if (nel!=mesh->dim || fnel!=mesh->dim) {
+        morpho_runtimeerror(v, SPHEROCYLINDER_DIM);
+        return false;
+    }
 
     for (int j=0; j<id; j++) {
         double rsq, r, uu, vv, dv=1.0;
 
-        matrix_getcolumnptr(mesh->vert, j, &x1);
+        if (matrix_getcolumnptr(mesh->vert, j, &x1)!=LINALGERR_OK) return false;
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &rsq, &uu, &vv)) return false;
@@ -308,7 +317,7 @@ value SpherocylinderOverlap_init(vm *v, int nargs, value *args) {
     }
 
     if (MORPHO_ISNIL(field)) {
-        morpho_runtimeerror(v, PAIRWISE_PRP);
+        morpho_runtimeerror(v, SPHEROCYLINDER_FLD);
     } else {
         objectinstance_setproperty(self, functional_fieldproperty, field);
         objectinstance_setproperty(self, pairwise_sigmaproperty, sigma);
@@ -318,8 +327,8 @@ value SpherocylinderOverlap_init(vm *v, int nargs, value *args) {
     return MORPHO_NIL;
 }
 
-FUNCTIONAL_METHOD(SpherocylinderOverlap, integrand, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_mapintegrand, spherocylinder_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
-FUNCTIONAL_METHOD(SpherocylinderOverlap, total, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_sumintegrand, spherocylinder_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
+FUNCTIONAL_METHOD(SpherocylinderOverlap, integrand, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_mapintegrand, spherocylinder_integrand, NULL, SPHEROCYLINDER_FLD, SYMMETRY_NONE)
+FUNCTIONAL_METHOD(SpherocylinderOverlap, total, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_sumintegrand, spherocylinder_integrand, NULL, SPHEROCYLINDER_FLD, SYMMETRY_NONE)
 
 value SpherocylinderOverlap_gradient(vm *v, int nargs, value *args) {
     functional_mapinfo info;
@@ -334,7 +343,7 @@ value SpherocylinderOverlap_gradient(vm *v, int nargs, value *args) {
             info.grad=spherocylinder_gradient;
             info.ref=&ref;
             functional_mapgradient(v, &info, &out);
-        } else morpho_runtimeerror(v, PAIRWISE_PRP);
+        } else morpho_runtimeerror(v, SPHEROCYLINDER_FLD);
     }
     if (!MORPHO_ISNIL(out)) morpho_bindobjects(v, 1, &out);
     return out;
@@ -355,7 +364,7 @@ value SpherocylinderOverlap_fieldgradient(vm *v, int nargs, value *args) {
             info.cloneref = spherocylinder_cloneref;
             info.ref = &ref;
             functional_mapfieldgradient(v, &info, &out);
-        } else morpho_runtimeerror(v, PAIRWISE_PRP);
+        } else morpho_runtimeerror(v, SPHEROCYLINDER_FLD);
     }
     if (!MORPHO_ISNIL(out)) morpho_bindobjects(v, 1, &out);
     return out;
