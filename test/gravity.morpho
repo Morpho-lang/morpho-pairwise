@@ -1,49 +1,29 @@
-// Test approximation of facets as point masses for gravity functionality
+// Pairwise on triangular facets approximated as point masses
+import pairwise
 import meshtools
-import plot
-import optimize
-import pairwise 
 
 var L = 1
 var r = 0.1
 
-// Test mesh: two opposing equilateral triangles centered on [-L,0] and [L,0] of radius r
-//    x               x
-//    |\             /|
-//    | \           / |
-//    |  x    0    x  |
-//    | /           \ |
-//    |/             \|
-//    x               x
-
-var mb = MeshBuilder() 
+var mb = MeshBuilder()
 for (theta in 0...2*Pi:2*Pi/3) {
-  mb.addvertex([-L+r*cos(theta),r*sin(theta),0])  
+  mb.addvertex([-L+r*cos(theta),r*sin(theta),0])
 }
 for (theta in 0...2*Pi:2*Pi/3) {
-  mb.addvertex([L-r*cos(theta),r*sin(theta),0])  
+  mb.addvertex([L-r*cos(theta),r*sin(theta),0])
 }
 mb.addface([0,1,2])
 mb.addface([3,4,5])
-var m = mb.build() 
+var m = mb.build()
 
-// Show(plotmesh(m, grade=[0,2]))
-
-
-var c = CoulombPotential() 
-print ">>Value"
-print c.value(2) 
+var c = CoulombPotential()
+print abs(c.value(2) - 0.5) < 1e-15 // expect: true
 
 var lp = Pairwise(c, grade=2)
+print abs(lp.total(m) - 0.5) < 1e-10 // expect: true
 
-print ">>Total"
-print lp.total(m) 
-
-print ">>Integrand"
-print lp.integrand(m) 
-
-print ">>Gradient"
-print lp.gradient(m) 
+var I = lp.integrand(m)
+print abs(I.column(1)[0] - 0.5) < 1e-10 // expect: true
 
 fn numericalgradient(func, m, eps=1e-8) {
    var x=m.vertexmatrix()
@@ -63,7 +43,6 @@ fn numericalgradient(func, m, eps=1e-8) {
    }
 
    return grad
-} 
+}
 
-print numericalgradient(lp, m)
-
+print (lp.gradient(m) - numericalgradient(lp, m)).norm() < 1e-5 // expect: true

@@ -1,6 +1,6 @@
+// Spherocylinder analytic vs numerical gradients
 import pairwise
-import meshtools 
-import plot
+import meshtools
 
 fn numericalgradient(func, m, eps=1e-8) {
    var x=m.vertexmatrix()
@@ -20,12 +20,12 @@ fn numericalgradient(func, m, eps=1e-8) {
    }
 
    return grad
-} 
+}
 
 fn numericalfieldgradient(func, m, f, eps=1e-8) {
    var grad=f.clone()
-   var lmat=f.__linearize() 
-   var gmat=grad.__linearize() 
+   var lmat=f.__linearize()
+   var gmat=grad.__linearize()
 
    var len=lmat.dimensions()[0]
 
@@ -40,24 +40,16 @@ fn numericalfieldgradient(func, m, f, eps=1e-8) {
    }
 
    return grad
-} 
+}
 
-var mb = MeshBuilder() 
+var mb = MeshBuilder()
 mb.addvertex([-2,0,0])
 mb.addvertex([2,0,0])
-var m = mb.build() 
+var m = mb.build()
 
 var f = Field(m, Matrix([1,0,0]))
+var sc = SpherocylinderOverlap(f)
 
-print "Total"
-print SpherocylinderOverlap(f).total(m)
-
-print "Gradient"
-print SpherocylinderOverlap(f).gradient(m)
-
-print numericalgradient(SpherocylinderOverlap(f), m)
-
-print "Field gradient:"
-print SpherocylinderOverlap(f).fieldgradient(m)
-
-print numericalfieldgradient(SpherocylinderOverlap(f), m, f)
+print abs(sc.total(m) - 2) < 1e-15 // expect: true
+print (sc.gradient(m) - numericalgradient(sc, m)).norm() < 1e-6 // expect: true
+print (sc.fieldgradient(m).__linearize() - numericalfieldgradient(sc, m, f).__linearize()).norm() < 1e-6 // expect: true

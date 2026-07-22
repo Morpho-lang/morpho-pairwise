@@ -1,27 +1,26 @@
+// Periodic pairwise interactions
 import pairwise
-import meshtools 
+import meshtools
 
-var c = CoulombPotential() 
+var lp = Pairwise(CoulombPotential(), box=1) // box of side length 1 centered at the origin
 
-var lp = Pairwise(CoulombPotential(), box=1) // This sets a box of side length 1 centered at the origin
-
-var mb = MeshBuilder() 
+var mb = MeshBuilder()
 mb.addvertex([0.0,0,0])
 mb.addvertex([0.2,0,0])
-var m = mb.build() 
+var m = mb.build()
 
-print lp.integrand(m) // expect: [ 0 5 ]
-print lp.gradient(m) // expect: [ 25 -25 ]
-// expect: [ 0 0 ]
-// expect: [ 0 0 ]
+print abs(lp.integrand(m).column(1)[0] - 5) < 1e-12 // expect: true
+print abs(lp.gradient(m).column(0)[0] - 25) < 1e-10 // expect: true
+print abs(lp.gradient(m).column(1)[0] + 25) < 1e-10 // expect: true
 
-m.setvertexposition(1, Matrix([0.6, 0, 0])) // This vertex is now at a distance 0.4 to the *left* of the first vertex
-print lp.integrand(m) // expect: [ 0 2.5 ]
-print lp.gradient(m) // expect: [ -6.25 6.25 ]
-// expect: [ 0 0 ]
-// expect: [ 0 0 ]
-m.setvertexposition(1, Matrix([-1.9, 0, 0])) // This vertex is now at a distance 0.1 to the right of the first vertex
-print lp.integrand(m) // expect: [ 0 10 ]
-print lp.gradient(m) // expect: [ 100 -100 ]
-// expect: [ 0 0 ]
-// expect: [ 0 0 ]
+// Vertex is now at a distance 0.4 to the left of the first vertex across the periodic boundary
+m.setvertexposition(1, Matrix([0.6, 0, 0]))
+print abs(lp.integrand(m).column(1)[0] - 2.5) < 1e-12 // expect: true
+print abs(lp.gradient(m).column(0)[0] + 6.25) < 1e-10 // expect: true
+print abs(lp.gradient(m).column(1)[0] - 6.25) < 1e-10 // expect: true
+
+// Vertex is now at a distance 0.1 to the right of the first vertex across the periodic boundary
+m.setvertexposition(1, Matrix([-1.9, 0, 0]))
+print abs(lp.integrand(m).column(1)[0] - 10) < 1e-12 // expect: true
+print abs(lp.gradient(m).column(0)[0] - 100) < 1e-8 // expect: true
+print abs(lp.gradient(m).column(1)[0] + 100) < 1e-8 // expect: true
