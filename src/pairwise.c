@@ -283,7 +283,7 @@ bool pairwise_averagevertexposition(objectmesh *mesh, int nv, int *vid, double *
     double *x0; 
     for (int i=0; i<mesh->dim; i++) xmean[i]=0.0; 
     for (int i=0; i<nv; i++) {
-        if (!matrix_getcolumn(mesh->vert, vid[i], &x0)) return false; 
+        if (matrix_getcolumnptr(mesh->vert, vid[i], &x0)!=LINALGERR_OK) return false; 
         functional_vecadd(mesh->dim, x0, xmean, xmean);
     }
     functional_vecscale(mesh->dim, 1.0/nv, xmean, xmean);
@@ -299,7 +299,7 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
 
     // Extract x0 
     if (nv==1) {
-        matrix_getcolumn(mesh->vert, id, &x0);
+        matrix_getcolumnptr(mesh->vert, id, &x0);
     } else { // Compute average position from vertices
         pairwise_averagevertexposition(mesh, nv, vid, x0mean);
         x0 = x0mean; 
@@ -312,7 +312,7 @@ bool pairwise_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int *vid,
     for (int j=0; j<id; j++) {
         // Extract x1
         if (nv==1) {
-            matrix_getcolumn(mesh->vert, j, &x1);
+            matrix_getcolumnptr(mesh->vert, j, &x1);
         } else {
             int nvj, *vidj;
             //printf("conn: %p\n", (void *) eref->conn);
@@ -369,7 +369,7 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
 
     // Extract x0 
     if (nv==1) {
-        matrix_getcolumn(mesh->vert, id, &x0);
+        matrix_getcolumnptr(mesh->vert, id, &x0);
     } else { // Compute average position from vertices
         pairwise_averagevertexposition(mesh, nv, vid, x0mean);
         x0 = x0mean; 
@@ -382,7 +382,7 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
     for (int j=0; j<id; j++) {
         // Extract x1
         if (nv==1) {
-            matrix_getcolumn(mesh->vert, j, &x1);
+            matrix_getcolumnptr(mesh->vert, j, &x1);
         } else {
             
             //printf("conn: %p\n", (void *) eref->conn);
@@ -420,12 +420,12 @@ bool pairwise_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int *vid, 
         double val; 
         if (morpho_valuetofloat(ret, &val)) {
             if (nv==1) {
-                matrix_addtocolumn(frc, id, w0*w1*val/r, s);
-                matrix_addtocolumn(frc, j, -w0*w1*val/r, s);
+                matrix_addtocolumnptr(frc, id, w0*w1*val/r, s);
+                matrix_addtocolumnptr(frc, j, -w0*w1*val/r, s);
             } else {
                 double nnv = (double) nv; 
-                for (int i=0; i<nv; i++) matrix_addtocolumn(frc, vid[i], w0*w1*val/r/nnv, s);
-                for (int i=0; i<nvj; i++) matrix_addtocolumn(frc, vidj[i], -w0*w1*val/r/nnv, s);
+                for (int i=0; i<nv; i++) matrix_addtocolumnptr(frc, vid[i], w0*w1*val/r/nnv, s);
+                for (int i=0; i<nvj; i++) matrix_addtocolumnptr(frc, vidj[i], -w0*w1*val/r/nnv, s);
             }
         }
         
@@ -644,14 +644,14 @@ bool spherocylinder_integrand(vm *v, objectmesh *mesh, elementid id, int nv, int
     double *x0, *x1, *t0, *t1, s[mesh->dim], sum = 0.0;
     unsigned int nel; 
 
-    matrix_getcolumn(mesh->vert, id, &x0);
+    matrix_getcolumnptr(mesh->vert, id, &x0);
     field_getelementaslist(eref->field, MESH_GRADE_VERTEX, id, 0, &nel, &t0); 
     if (nel!=mesh->dim) return false; 
 
     for (int j=0; j<id; j++) {
         double r; 
 
-        matrix_getcolumn(mesh->vert, j, &x1);
+        matrix_getcolumnptr(mesh->vert, j, &x1);
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &r, NULL, NULL)) return false; 
@@ -680,14 +680,14 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
     double *x0, *x1, *t0, *t1, s[mesh->dim];
     unsigned int nel; 
 
-    matrix_getcolumn(mesh->vert, id, &x0);
+    matrix_getcolumnptr(mesh->vert, id, &x0);
     field_getelementaslist(eref->field, MESH_GRADE_VERTEX, id, 0, &nel, &t0); 
     if (nel!=mesh->dim) return false; 
 
     for (int j=0; j<id; j++) {
         double rsq, r, uu, vv, dv=1.0; 
 
-        matrix_getcolumn(mesh->vert, j, &x1);
+        matrix_getcolumnptr(mesh->vert, j, &x1);
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &rsq, &uu, &vv)) return false; 
@@ -712,10 +712,10 @@ bool spherocylinder_gradient(vm *v, objectmesh *mesh, elementid id, int nv, int 
         functional_vecsub(mesh->dim, x0, x1, s);
         functional_vecaddscale(mesh->dim, s, uu, t0, s);
         functional_vecaddscale(mesh->dim, s, -vv, t1, s);
-        matrix_addtocolumn(frc, id, dv/r, s);
+        matrix_addtocolumnptr(frc, id, dv/r, s);
 
         // Grad_x1 s^2 = -Grad_x0 s^2
-        matrix_addtocolumn(frc, j, -dv/r, s);
+        matrix_addtocolumnptr(frc, j, -dv/r, s);
 
         //for (int i=0; i<mesh->dim; i++) printf("%g ", s[i]);
         //printf("\n");
@@ -730,7 +730,7 @@ bool spherocylinder_fieldgradient(vm *v, objectmesh *mesh, elementid id, int nv,
     double *x0, *x1, *t0, *t1, *ft0, *ft1, s[mesh->dim];
     unsigned int nel, fnel; 
 
-    matrix_getcolumn(mesh->vert, id, &x0);
+    matrix_getcolumnptr(mesh->vert, id, &x0);
     field_getelementaslist(eref->field, MESH_GRADE_VERTEX, id, 0, &nel, &t0); 
     field_getelementaslist(frc, MESH_GRADE_VERTEX, id, 0, &fnel, &ft0); 
     if (nel!=mesh->dim || fnel!=mesh->dim) return false; 
@@ -738,7 +738,7 @@ bool spherocylinder_fieldgradient(vm *v, objectmesh *mesh, elementid id, int nv,
     for (int j=0; j<id; j++) {
         double rsq, r, uu, vv, dv=1.0; 
 
-        matrix_getcolumn(mesh->vert, j, &x1);
+        matrix_getcolumnptr(mesh->vert, j, &x1);
         field_getelementaslist(eref->field, MESH_GRADE_VERTEX, j, 0, &nel, &t1);
 
         if (!spherocylinder_distance(nel, x0, x1, t0, t1, eref->center, &rsq, &uu, &vv)) return false; 
