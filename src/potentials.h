@@ -12,8 +12,6 @@
 #define HERTZIAN_CLASSNAME                   "HertzianPotential"
 #define LENNARDJONES_CLASSNAME               "LJPotential"
 
-#define LJ_SIGMA_PROPERTY                    "sigma"
-
 void potentials_initialize(value objclass);
 
 #endif

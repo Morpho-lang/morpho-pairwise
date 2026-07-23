@@ -88,7 +88,7 @@ value Hertzian_init(vm *v, int nargs, value *args) {
     return MORPHO_NIL;
 }
 
-bool hertzian_getsigma(value obj, double *sigma) {
+static bool potential_getsigma(value obj, double *sigma) {
     value val;
     return (objectinstance_getproperty(MORPHO_GETINSTANCE(obj), pairwise_sigmaproperty, &val) &&
             morpho_valuetofloat(val, sigma));
@@ -98,7 +98,7 @@ value Hertzian_value(vm *v, int nargs, value *args) {
     value out = MORPHO_NIL;
     if (nargs==1) {
         double sigma, r;
-        if (hertzian_getsigma(MORPHO_SELF(args), &sigma) &&
+        if (potential_getsigma(MORPHO_SELF(args), &sigma) &&
             morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
             if (r<sigma) {
                 double u = 1-r/sigma;
@@ -115,7 +115,7 @@ value Hertzian_deriv(vm *v, int nargs, value *args) {
     value out = MORPHO_NIL;
     if (nargs==1) {
         double sigma, r;
-        if (hertzian_getsigma(MORPHO_SELF(args), &sigma) &&
+        if (potential_getsigma(MORPHO_SELF(args), &sigma) &&
             morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)){
             if (r<sigma) {
                 double u = 1-r/sigma;
@@ -138,13 +138,11 @@ MORPHO_ENDCLASS
  * Lennard Jones
  * ---------------------------------------------- */
 
-static value lj_sigmaproperty;
-
 value LennardJones_init(vm *v, int nargs, value *args) {
     objectinstance *self = MORPHO_GETINSTANCE(MORPHO_SELF(args));
 
     if (nargs>0 && MORPHO_ISNUMBER(MORPHO_GETARG(args, 0))) {
-        objectinstance_setproperty(self, lj_sigmaproperty, MORPHO_GETARG(args, 0));
+        objectinstance_setproperty(self, pairwise_sigmaproperty, MORPHO_GETARG(args, 0));
     } else {
         morpho_runtimeerror(v, PAIRWISE_PRP);
     }
@@ -152,17 +150,11 @@ value LennardJones_init(vm *v, int nargs, value *args) {
     return MORPHO_NIL;
 }
 
-bool lennardjones_getsigma(value obj, double *sigma) {
-    value val;
-    return (objectinstance_getproperty(MORPHO_GETINSTANCE(obj), lj_sigmaproperty, &val) &&
-            morpho_valuetofloat(val, sigma));
-}
-
 value LennardJones_value(vm *v, int nargs, value *args) {
     value out = MORPHO_NIL;
     if (nargs==1) {
         double sigma, r, val;
-        if (lennardjones_getsigma(MORPHO_SELF(args), &sigma) &&
+        if (potential_getsigma(MORPHO_SELF(args), &sigma) &&
             morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)) {
             val = 4*(pow((sigma/r), 12) - pow((sigma/r), 6));
             out = MORPHO_FLOAT(val) ;
@@ -175,7 +167,7 @@ value LennardJones_deriv(vm *v, int nargs, value *args) {
     value out = MORPHO_NIL;
     if (nargs==1) {
         double sigma, r, val;
-        if (lennardjones_getsigma(MORPHO_SELF(args), &sigma) &&
+        if (potential_getsigma(MORPHO_SELF(args), &sigma) &&
             morpho_valuetofloat(MORPHO_GETARG(args, 0), &r)){
             val = -24 * (2 * pow((sigma/r),12) - pow((sigma/r),6)) / r;
             out = MORPHO_FLOAT(val);
@@ -191,8 +183,6 @@ MORPHO_METHOD(PAIRWISE_DERIVATIVE_METHOD, LennardJones_deriv, BUILTIN_FLAGSEMPTY
 MORPHO_ENDCLASS
 
 void potentials_initialize(value objclass) {
-    lj_sigmaproperty=builtin_internsymbolascstring(LJ_SIGMA_PROPERTY);
-
     builtin_addclass(COULOMB_CLASSNAME, MORPHO_GETCLASSDEFINITION(Coulomb), objclass);
     builtin_addclass(GRAVITY_CLASSNAME, MORPHO_GETCLASSDEFINITION(Gravity), objclass);
     builtin_addclass(HERTZIAN_CLASSNAME, MORPHO_GETCLASSDEFINITION(Hertzian), objclass);
