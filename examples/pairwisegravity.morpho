@@ -1,0 +1,33 @@
+import pairwise
+import meshtools
+import plot
+import optimize4
+
+var mb = MeshBuilder()
+mb.addvertex([-1,-1,0])
+mb.addvertex([-1,1,0])
+mb.addvertex([1,-1,0])
+mb.addvertex([1,1,0])
+var m = mb.build()
+
+var sigma = 0.5
+
+var ginit = plotmesh(m, grade=[0], color=Blue)
+
+var lp = Pairwise(GravityPotential())
+var lh = Pairwise(HertzianPotential(sigma))
+
+print lp.total(m)
+print lp.integrand(m)
+print lp.gradient(m)
+
+var problem = OptimizationProblem(m)
+problem.addEnergy(lp)
+// Soft core so L-BFGS can take large steps near GravityPotential's -1/r singularity
+problem.addEnergy(lh, prefactor=200)
+
+var adapter = ProblemAdapter(problem, m)
+var opt = LBFGSController(adapter)
+opt.optimize(200)
+
+Show(ginit+plotmesh(m, grade=[0,2]))

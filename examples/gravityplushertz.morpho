@@ -1,15 +1,14 @@
 import pairwise
-import meshtools 
-import moviemaker
+import meshtools
 import plot
-import optimize
+import optimize4
 
-var mb = MeshBuilder() 
+var mb = MeshBuilder()
 mb.addvertex([-1,-1,0])
 mb.addvertex([-1,1,0])
 mb.addvertex([1,-1,0])
 mb.addvertex([1,1,0])
-var m = mb.build() 
+var m = mb.build()
 
 var sigma = 0.5
 
@@ -30,16 +29,14 @@ var lp = Pairwise(GravityPotential())
 var lh = Pairwise(HertzianPotential(sigma))
 
 var problem = OptimizationProblem(m)
+problem.addEnergy(lp)
+// Keep Hertzian strong enough to shield GravityPotential's -1/r singularity,
+// so a quasi-Newton method can take large steps safely.
+problem.addEnergy(lh, prefactor=200)
 
-problem.addenergy(lp)
-problem.addenergy(lh, prefactor=100)
-
-var opt = ShapeOptimizer(problem, m)
-opt.stepsize = 0.0001 
-opt.steplimit = 0.001
-
-opt.conjugategradient(10000)
-opt.relax(100)
+var adapter = ProblemAdapter(problem, m)
+var opt = LBFGSController(adapter)
+opt.optimize(500)
 
 print m.vertexmatrix()
 

@@ -1,0 +1,48 @@
+// Thomson problem of arranging charges on a sphere
+// to minimize the electrostatic energy
+// (cf. morpho-optimize4 test/examples/thomson.morpho + test/sqp/thomson.morpho)
+import meshtools
+import plot
+import optimize4
+import functionals
+import pairwise
+
+var Np = 100 // Number of particles
+
+// Create the mesh: Np random points on the unit sphere
+var build = MeshBuilder()
+for (i in 1..Np) {
+  var x = Matrix([2*random()-1, 2*random()-1, 2*random()-1])
+  x/=x.norm() // Project onto unit sphere
+  build.addvertex(x)
+}
+var mesh = build.build()
+
+var problem = OptimizationProblem(mesh)
+
+// Particles repel via a Coulomb potential
+var lv = Pairwise(CoulombPotential())
+problem.addEnergy(lv)
+
+// Harmonic confinement. Constant on the unit sphere (so the constrained
+// Thomson problem is unchanged), but makes the free problem coercive.
+var lquad = ScalarPotential(fn (x,y,z) (x^2+y^2+z^2)/2, fn (x,y,z) Matrix([x, y, z]))
+problem.addEnergy(lquad)
+
+// Constrain particles to the unit sphere
+var lsph = ScalarPotential(fn (x,y,z) x^2+y^2+z^2-1, fn (x,y,z) Matrix([2*x, 2*y, 2*z]))
+problem.addLocalConstraint(lsph)
+
+var adapter = ProblemAdapter(problem, mesh)
+var opt = SQPController(adapter)
+opt.recoverlinesearchfailure = true
+opt.optimize(500)
+
+print "E=${lv.total(mesh)} r=${mesh.vertexposition(0).norm()}"
+
+// Visualize the results
+var g = Graphics()
+for (i in 0...mesh.count()) {
+  g.display(Sphere(mesh.vertexposition(i), 1/sqrt(Np)))
+}
+Show(g)
