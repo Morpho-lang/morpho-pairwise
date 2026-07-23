@@ -1,69 +1,89 @@
 import pairwise
-import meshtools 
-import optimize
+import meshtools
+import optimize4
+import functionals
 import plot
 
-var N = 40
+var N = 60
 
-var L = 0.4 // Length of cylinders
+var L = 0.4 // Half-length of cylinders (endpoint offset)
 var R = 0.1 // Radius of cylinders
 var sigma = 2*R // Cutoff 
 
-var mb = MeshBuilder() 
+var mb = MeshBuilder()
 for (i in 1..N) {
     var x = Matrix([randomnormal(), randomnormal(), randomnormal()])
-    x = x/x.norm() 
+    x = x/x.norm()
     mb.addvertex(x)
-} 
-var m = mb.build() 
+}
+var m = mb.build()
 
 var f = Field(m, Matrix([1,0,0]))
 
+// Initialize orientations tangent to the sphere, fixed length L
 for (id in 0...m.count()) {
-    var x = m.vertexposition(id) 
+    var x = m.vertexposition(id)
     var t = Matrix([randomnormal(), randomnormal(), randomnormal()])
     t -= (t.inner(x)/x.inner(x)) * x
-    f[0, id] = L*t/t.norm() 
+    f[0, id] = L*t/t.norm()
 }
 
-fn vis(m, f, color=col) {
-    var g = Graphics() 
+fn projectTangents(m, f, L) {
     for (id in 0...m.count()) {
-        var x = m.vertexposition(id) 
+        var x = m.vertexposition(id)
         var t = f[0,id]
-        g.display(Cylinder(x-t,x+t, aspectratio  = R/L))
+        t -= (t.inner(x)/x.inner(x)) * x
+        var n = t.norm()
+        if (n > 1e-12) f[0,id] = L*t/n
     }
-    return g 
-}  
+}
 
-var hertz = HertzianPotential(0.5)
+fn vis(m, f) {
+    var g = Graphics()
+    for (id in 0...m.count()) {
+        var x = m.vertexposition(id)
+        var t = f[0,id]
+        g.display(Cylinder(x-t, x+t, aspectratio=R/L))
+    }
+    return g
+}
 
-var problem = OptimizationProblem(m)
+fn relax(sproblem, fproblem, m, f, L, nburst, nstep) {
+    for (burst in 1..nburst) {
+        var sopt = SQPController(ProblemAdapter(sproblem, m))
+        sopt.recoverlinesearchfailure = true
+        sopt.optimize(nstep)
+        projectTangents(m, f, L)
 
+        var fopt = LBFGSController(ProblemAdapter(fproblem, f))
+        fopt.recoverlinesearchfailure = true
+        fopt.optimize(nstep)
+        projectTangents(m, f, L)
+    }
+}
+
+var hertz = HertzianPotential(0.05)
 var lop = SpherocylinderOverlap(f, hertz)
-problem.addenergy(lop) 
 
+// Shape problem: move centers on the sphere with orientations held fixed
+var sproblem = OptimizationProblem(m)
+sproblem.addEnergy(lop)
 var lsph = ScalarPotential(fn (x,y,z) x^2+y^2+z^2-1, fn (x,y,z) Matrix([2*x, 2*y, 2*z]))
-problem.addlocalconstraint(lsph)
+sproblem.addLocalConstraint(lsph)
 
-var sopt = ShapeOptimizer(problem, m)
-var fopt = ShapeOptimizer(problem, f)
+// Field problem: reorient at fixed positions (no sphere constraint)
+var fproblem = OptimizationProblem(m)
+fproblem.addEnergy(lop)
 
-sopt.stepsize = 0.01
-sopt.linesearch(1000)
-//fopt.relax(1)
+// Inflate to contact diameter so a non-overlapping packing exists
+for (sigma in 0.05..sigmaMax:(sigmaMax-0.05)/10) {
+    hertz.sigma = sigma
+    relax(sproblem, fproblem, m, f, L, 4, 40)
+    print "sigma=${sigma} E=${lop.total(m)}"
+}
+
+hertz.sigma = sigmaMax
+relax(sproblem, fproblem, m, f, L, 8, 80)
+print "final E=${lop.total(m)}"
 
 Show(vis(m, f))
-
-//print lop.total(m)
-
-/*
-print "Total"
-print SpherocylinderOverlap(f, hertz).total(m)
-
-print "Gradient"
-print SpherocylinderOverlap(f, hertz).gradient(m)
-
-print "Field gradient:"
-print SpherocylinderOverlap(f, hertz).fieldgradient(m)
-*/

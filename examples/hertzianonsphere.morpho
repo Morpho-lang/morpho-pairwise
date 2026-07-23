@@ -40,7 +40,7 @@ for (sigma in 0.1*Rmax..2*Rmax:(2-0.1)*Rmax/40) {
   var E0 = lv.total(mesh)
   if (E0 > 1e-12) {
     var pad = PenaltyAdapter(adapter, penalty=50)
-    var opt = LBFGSController(pad, quiet=true)
+    var opt = LBFGSController(pad)
     opt.recoverlinesearchfailure = true
     opt.optimize(200)
     print "sigma=${sigma} E=${lv.total(mesh)}"
