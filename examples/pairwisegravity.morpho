@@ -18,7 +18,7 @@ var lp = Pairwise(GravityPotential())
 var lh = Pairwise(HertzianPotential(sigma))
 
 print lp.total(m)
-print lp.integrand(m)
+print lp.integrand(m)[1]
 print lp.gradient(m)
 
 var problem = OptimizationProblem(m)

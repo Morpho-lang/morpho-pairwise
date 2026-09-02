@@ -98,14 +98,15 @@ Typical use:
 
     var lp = Pairwise(CoulombPotential(), cutoff=2)
     print lp.total(m)
-    print lp.integrand(m)
+    var I = lp.integrand(m) // scalar Field
     print lp.gradient(m)
 
 Methods:
 
 * `total(mesh)` — total pairwise energy
-* `integrand(mesh)` — per-element contributions
-* `gradient(mesh)` — gradient with respect to vertex positions
+* `integrand(mesh)` — scalar Field of per-element contributions on the functional's grade (vertices by default)
+* `integrand(mesh, id)` — contribution of a single element as a Float
+* `gradient(mesh)` — gradient with respect to vertex positions (Matrix; columns are vertices)
 
 The `cutoff` property can be updated after construction:
 
@@ -131,9 +132,9 @@ If no potential is supplied, the functional uses the shortest separation distanc
 Methods:
 
 * `total(mesh)` — total interaction energy
-* `integrand(mesh)` — per-vertex contributions
-* `gradient(mesh)` — gradient with respect to vertex positions
-* `fieldgradient(mesh)` — gradient with respect to the orientation field
+* `integrand(mesh)` — scalar Field of per-vertex contributions
+* `gradient(mesh)` — gradient with respect to vertex positions (Matrix)
+* `fieldgradient(field)` — gradient with respect to the orientation field (Field with the same layout)
 
 Example:
 
@@ -149,5 +150,6 @@ Example:
     var sc = SpherocylinderOverlap(f)
 
     print sc.total(m)
+    print sc.integrand(m)[1]
     print sc.gradient(m)
-    print sc.fieldgradient(m)
+    print sc.fieldgradient(f)

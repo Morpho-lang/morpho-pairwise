@@ -327,55 +327,24 @@ value SpherocylinderOverlap_init(vm *v, int nargs, value *args) {
     return MORPHO_NIL;
 }
 
-FUNCTIONAL_METHOD(SpherocylinderOverlap, integrand, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_mapintegrand, spherocylinder_integrand, NULL, SPHEROCYLINDER_FLD, SYMMETRY_NONE)
-FUNCTIONAL_METHOD(SpherocylinderOverlap, total, MESH_GRADE_VERTEX, spherocylinderref, spherocylinder_prepareref, functional_sumintegrand, spherocylinder_integrand, NULL, SPHEROCYLINDER_FLD, SYMMETRY_NONE)
-
-value SpherocylinderOverlap_gradient(vm *v, int nargs, value *args) {
-    functional_mapinfo info;
-    spherocylinderref ref;
-    value out=MORPHO_NIL;
-
-    if (functional_validateargs(v, nargs, args, &info)) {
-        if (spherocylinder_prepareref(MORPHO_GETINSTANCE(MORPHO_SELF(args)), info.mesh, MESH_GRADE_VERTEX, info.sel, &ref)) {
-            info.g=MESH_GRADE_VERTEX;
-            info.field = ref.field;
-            info.integrand=spherocylinder_integrand;
-            info.grad=spherocylinder_gradient;
-            info.ref=&ref;
-            functional_mapgradient(v, &info, &out);
-        } else morpho_runtimeerror(v, SPHEROCYLINDER_FLD);
-    }
-    if (!MORPHO_ISNIL(out)) morpho_bindobjects(v, 1, &out);
-    return out;
+static bool spherocylinder_mapfieldgradient(vm *v, functional_mapinfo *info, value *out) {
+    info->fieldgrad = spherocylinder_fieldgradient;
+    return functional_mapfieldgradient(v, info, out);
 }
 
-value SpherocylinderOverlap_fieldgradient(vm *v, int nargs, value *args) {
-    functional_mapinfo info;
-    spherocylinderref ref;
-    value out=MORPHO_NIL;
-
-    if (functional_validateargs(v, nargs, args, &info)) {
-        if (spherocylinder_prepareref(MORPHO_GETINSTANCE(MORPHO_SELF(args)), info.mesh, MESH_GRADE_VERTEX, info.sel, &ref)) {
-            info.g = MESH_GRADE_VERTEX;
-            info.field = ref.field;
-            info.integrand = spherocylinder_integrand;
-            info.grad = spherocylinder_gradient;
-            info.fieldgrad = spherocylinder_fieldgradient;
-            info.cloneref = spherocylinder_cloneref;
-            info.ref = &ref;
-            functional_mapfieldgradient(v, &info, &out);
-        } else morpho_runtimeerror(v, SPHEROCYLINDER_FLD);
-    }
-    if (!MORPHO_ISNIL(out)) morpho_bindobjects(v, 1, &out);
-    return out;
-}
+FUNCTIONAL_MD_REF_BIND(SpherocylinderOverlap, spherocylinderref, spherocylinder_prepareref, spherocylinder_integrand, SPHEROCYLINDER_FLD)
+FUNCTIONAL_MD_REF_INTEGRAND(SpherocylinderOverlap, spherocylinderref, MESH_GRADE_VERTEX)
+FUNCTIONAL_MD_REF_TOTAL(SpherocylinderOverlap, spherocylinderref, MESH_GRADE_VERTEX)
+FUNCTIONAL_MD_REF_GRADIENT(SpherocylinderOverlap, spherocylinderref, MESH_GRADE_VERTEX, spherocylinder_gradient, SYMMETRY_NONE)
+FUNCTIONAL_MD_REF_FIELDGRADIENT_MAP(SpherocylinderOverlap, spherocylinderref, MESH_GRADE_VERTEX, spherocylinder_mapfieldgradient, spherocylinder_cloneref, NULL)
 
 MORPHO_BEGINCLASS(SpherocylinderOverlap)
-MORPHO_METHOD(MORPHO_INITIALIZER_METHOD, SpherocylinderOverlap_init, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_INTEGRAND_METHOD, SpherocylinderOverlap_integrand, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_GRADIENT_METHOD, SpherocylinderOverlap_gradient, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_TOTAL_METHOD, SpherocylinderOverlap_total, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_FIELDGRADIENT_METHOD, SpherocylinderOverlap_fieldgradient, BUILTIN_FLAGSEMPTY)
+MORPHO_METHOD_SIGNATURE(MORPHO_INITIALIZER_METHOD, "(...)", SpherocylinderOverlap_init, MORPHO_FN_MUTATES|MORPHO_FN_OPTARGS),
+
+FUNCTIONAL_MD_INTEGRAND_METHODS(SpherocylinderOverlap),
+FUNCTIONAL_MD_TOTAL_METHODS(SpherocylinderOverlap),
+FUNCTIONAL_MD_GRADIENT_METHODS(SpherocylinderOverlap),
+FUNCTIONAL_MD_FIELDGRADIENT_METHODS(SpherocylinderOverlap)
 MORPHO_ENDCLASS
 
 void spherocylinder_initialize(value objclass) {

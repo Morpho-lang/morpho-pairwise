@@ -1,4 +1,4 @@
-// Error: 'SphrCylFld'
+// expect error 'SphrCylFld'
 import pairwise
 
 SpherocylinderOverlap()

@@ -51,5 +51,15 @@ var f = Field(m, Matrix([1,0,0]))
 var sc = SpherocylinderOverlap(f)
 
 print abs(sc.total(m) - 2) < 1e-15 // expect: true
+
+var I = sc.integrand(m)
+print isfield(I) // expect: true
+print I.count() == m.count() // expect: true
+print abs(I[1] - 2) < 1e-15 // expect: true
+print abs(sc.integrand(m, 1) - 2) < 1e-15 // expect: true
+
 print (sc.gradient(m) - numericalgradient(sc, m)).norm() < 1e-6 // expect: true
-print (sc.fieldgradient(m).__linearize() - numericalfieldgradient(sc, m, f).__linearize()).norm() < 1e-6 // expect: true
+
+var fg = sc.fieldgradient(f)
+print isfield(fg) // expect: true
+print (fg.__linearize() - numericalfieldgradient(sc, m, f).__linearize()).norm() < 1e-6 // expect: true

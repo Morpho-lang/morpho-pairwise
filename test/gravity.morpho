@@ -23,7 +23,8 @@ var lp = Pairwise(c, grade=2)
 print abs(lp.total(m) - 0.5) < 1e-10 // expect: true
 
 var I = lp.integrand(m)
-print abs(I.column(1)[0] - 0.5) < 1e-10 // expect: true
+print isfield(I) // expect: true
+print abs(I[1] - 0.5) < 1e-10 // expect: true
 
 fn numericalgradient(func, m, eps=1e-8) {
    var x=m.vertexmatrix()

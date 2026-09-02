@@ -18,9 +18,16 @@ var lp = Pairwise(c, cutoff=2)
 print abs(lp.total(m) - (4 + sqrt(2))) < 1e-5 // expect: true
 
 var I = lp.integrand(m)
-print abs(I.column(1)[0] - 1) < 1e-12 // expect: true
-print abs(I.column(2)[0] - (1 + 1/sqrt(2))) < 1e-5 // expect: true
-print abs(I.column(3)[0] - (2 + 1/sqrt(2))) < 1e-5 // expect: true
+print isfield(I) // expect: true
+print I.count() == m.count() // expect: true
+print abs(lp.integrand(m, 0)) < 1e-12 // expect: true
+print abs(lp.integrand(m, 1) - 1) < 1e-12 // expect: true
+
+var expected = Field(m, 0)
+expected[1] = 1
+expected[2] = 1 + 1/sqrt(2)
+expected[3] = 2 + 1/sqrt(2)
+print (I - expected).norm() < 1e-5 // expect: true
 
 var G = lp.gradient(m)
 print abs(G.column(0)[0] - (1 + 1/sqrt(2)/2)) < 1e-5 // expect: true

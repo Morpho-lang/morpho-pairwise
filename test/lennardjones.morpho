@@ -14,5 +14,5 @@ var lp = Pairwise(lj, cutoff=2)
 
 var v = 4*((sigma/x)^12-(sigma/x)^6)
 var vprime = -24 * ((2 * (sigma/x)^12) - (sigma/x)^6) / x
-print abs(lp.integrand(m).column(1)[0]-v) < 1e-10 // expect: true
+print abs(lp.integrand(m)[1]-v) < 1e-10 // expect: true
 print abs(lp.gradient(m).column(1)[0]-vprime) < 1e-10 // expect: true

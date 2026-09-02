@@ -20,4 +20,4 @@ print "Gradient"
 print SpherocylinderOverlap(f, hertz).gradient(m)
 
 print "Field gradient:"
-print SpherocylinderOverlap(f, hertz).fieldgradient(m)
+print SpherocylinderOverlap(f, hertz).fieldgradient(f)

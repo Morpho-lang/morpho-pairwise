@@ -1,4 +1,4 @@
-// Error: 'PrwsPrp'
+// expect error 'PrwsPrp'
 import pairwise
 
 LJPotential()

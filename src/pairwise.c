@@ -234,33 +234,17 @@ value Pairwise_init(vm *v, int nargs, value *args) {
     return MORPHO_NIL;
 }
 
-FUNCTIONAL_METHOD(Pairwise, integrand, ref.g, pairwiseref, pairwise_prepareref, functional_mapintegrand, pairwise_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
-
-FUNCTIONAL_METHOD(Pairwise, total, ref.g, pairwiseref, pairwise_prepareref, functional_sumintegrand, pairwise_integrand, NULL, PAIRWISE_PRP, SYMMETRY_NONE)
-
-value Pairwise_gradient(vm *v, int nargs, value *args) {
-    functional_mapinfo info;
-    pairwiseref ref;
-    value out=MORPHO_NIL;
-
-    if (functional_validateargs(v, nargs, args, &info)) {
-        if (pairwise_prepareref(MORPHO_GETINSTANCE(MORPHO_SELF(args)), info.mesh, MESH_GRADE_LINE, info.sel, &ref)) {
-            info.g=ref.g;
-            info.integrand=pairwise_integrand;
-            info.grad=pairwise_gradient;
-            info.ref=&ref;
-            functional_mapgradient(v, &info, &out);
-        } else morpho_runtimeerror(v, PAIRWISE_PRP);
-    }
-    if (!MORPHO_ISNIL(out)) morpho_bindobjects(v, 1, &out);
-    return out;
-}
+FUNCTIONAL_MD_REF_BIND(Pairwise, pairwiseref, pairwise_prepareref, pairwise_integrand, PAIRWISE_PRP)
+FUNCTIONAL_MD_REF_INTEGRAND(Pairwise, pairwiseref, ref.g)
+FUNCTIONAL_MD_REF_TOTAL(Pairwise, pairwiseref, ref.g)
+FUNCTIONAL_MD_REF_GRADIENT(Pairwise, pairwiseref, ref.g, pairwise_gradient, SYMMETRY_NONE)
 
 MORPHO_BEGINCLASS(Pairwise)
-MORPHO_METHOD(MORPHO_INITIALIZER_METHOD, Pairwise_init, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_INTEGRAND_METHOD, Pairwise_integrand, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_TOTAL_METHOD, Pairwise_total, BUILTIN_FLAGSEMPTY),
-MORPHO_METHOD(FUNCTIONAL_GRADIENT_METHOD, Pairwise_gradient, BUILTIN_FLAGSEMPTY)
+MORPHO_METHOD_SIGNATURE(MORPHO_INITIALIZER_METHOD, "(...)", Pairwise_init, MORPHO_FN_MUTATES|MORPHO_FN_OPTARGS),
+
+FUNCTIONAL_MD_INTEGRAND_METHODS(Pairwise),
+FUNCTIONAL_MD_TOTAL_METHODS(Pairwise),
+FUNCTIONAL_MD_GRADIENT_METHODS(Pairwise)
 MORPHO_ENDCLASS
 
 void pairwise_initialize(void) {
